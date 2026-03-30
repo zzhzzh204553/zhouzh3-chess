@@ -204,9 +204,153 @@
         return invalid("兵或卒只能前进，过河后才能横走");
     }
 
+    function clonePieces(pieces) {
+        return pieces.map(piece => ({
+            code: piece.code,
+            row: piece.row,
+            col: piece.col
+        }));
+    }
+
+    function applyMove(piece, from, to, pieces) {
+        const nextPieces = clonePieces(pieces)
+            .filter(current => current.row !== to.row || current.col !== to.col);
+
+        const movingPiece = nextPieces.find(current =>
+            current.row === from.row && current.col === from.col && current.code === piece.code
+        );
+
+        if (!movingPiece) {
+            return nextPieces;
+        }
+
+        movingPiece.row = to.row;
+        movingPiece.col = to.col;
+        return nextPieces;
+    }
+
+    function findKing(pieces, redSide) {
+        const targetCode = redSide ? "K" : "k";
+        return pieces.find(piece => piece.code === targetCode) || null;
+    }
+
+    function canRookAttack(piece, targetRow, targetCol, boardMap) {
+        if (piece.row !== targetRow && piece.col !== targetCol) {
+            return false;
+        }
+        return countPiecesBetween(piece, { row: targetRow, col: targetCol }, boardMap) === 0;
+    }
+
+    function canCannonAttack(piece, targetRow, targetCol, boardMap) {
+        if (piece.row !== targetRow && piece.col !== targetCol) {
+            return false;
+        }
+        return countPiecesBetween(piece, { row: targetRow, col: targetCol }, boardMap) === 1;
+    }
+
+    function canKnightAttack(piece, targetRow, targetCol, boardMap) {
+        const rowDelta = targetRow - piece.row;
+        const colDelta = targetCol - piece.col;
+        const absRow = Math.abs(rowDelta);
+        const absCol = Math.abs(colDelta);
+        if (!((absRow === 2 && absCol === 1) || (absRow === 1 && absCol === 2))) {
+            return false;
+        }
+
+        const legRow = absRow === 2 ? piece.row + rowDelta / 2 : piece.row;
+        const legCol = absCol === 2 ? piece.col + colDelta / 2 : piece.col;
+        return !getPieceAt(boardMap, legRow, legCol);
+    }
+
+    function canPawnAttack(piece, targetRow, targetCol) {
+        const rowDelta = targetRow - piece.row;
+        const colDelta = targetCol - piece.col;
+        const forwardStep = isRedPiece(piece) ? -1 : 1;
+
+        if (rowDelta === forwardStep && colDelta === 0) {
+            return true;
+        }
+
+        return hasCrossedRiver(piece, piece.row) && rowDelta === 0 && Math.abs(colDelta) === 1;
+    }
+
+    function canKingAttack(piece, targetRow, targetCol) {
+        return isInsidePalace(piece, targetRow, targetCol)
+            && Math.abs(targetRow - piece.row) + Math.abs(targetCol - piece.col) === 1;
+    }
+
+    function isFlyingGeneral(pieces) {
+        const redKing = findKing(pieces, true);
+        const blackKing = findKing(pieces, false);
+        if (!redKing || !blackKing || redKing.col !== blackKing.col) {
+            return false;
+        }
+
+        const minRow = Math.min(redKing.row, blackKing.row) + 1;
+        const maxRow = Math.max(redKing.row, blackKing.row);
+        return !pieces.some(piece =>
+            piece.col === redKing.col && piece.row >= minRow && piece.row < maxRow
+        );
+    }
+
+    function isSquareAttacked(row, col, attackerRed, pieces) {
+        const boardMap = buildBoardMap(pieces);
+        return pieces.some(piece => {
+            if (isRedPiece(piece) !== attackerRed) {
+                return false;
+            }
+
+            switch (piece.code.toUpperCase()) {
+                case "R":
+                    return canRookAttack(piece, row, col, boardMap);
+                case "N":
+                    return canKnightAttack(piece, row, col, boardMap);
+                case "C":
+                    return canCannonAttack(piece, row, col, boardMap);
+                case "P":
+                    return canPawnAttack(piece, row, col);
+                case "K":
+                    return canKingAttack(piece, row, col);
+                default:
+                    return false;
+            }
+        });
+    }
+
+    function isInCheck(redSide, pieces) {
+        const king = findKing(pieces, redSide);
+        if (!king) {
+            return false;
+        }
+
+        if (isFlyingGeneral(pieces)) {
+            return true;
+        }
+
+        return isSquareAttacked(king.row, king.col, !redSide, pieces);
+    }
+
+    function isLegalPositionAfterMove(piece, from, to, pieces) {
+        const movingRed = isRedPiece(piece);
+        const wasInCheck = isInCheck(movingRed, pieces);
+        const nextPieces = applyMove(piece, from, to, pieces);
+
+        if (isFlyingGeneral(nextPieces)) {
+            return invalid("将帅不能照面");
+        }
+
+        if (isInCheck(movingRed, nextPieces)) {
+            return wasInCheck
+                ? invalid("当前正在被将军，必须先解将")
+                : invalid("不能走成送将局面");
+        }
+
+        return valid();
+    }
+
     function isLegalMove(piece, from, to, pieces) {
         const boardMap = buildBoardMap(pieces);
-        const basicResult = validateBasicMove(piece, from, to, boardMap);
+        let basicResult = validateBasicMove(piece, from, to, boardMap);
         if (!basicResult.ok) {
             return basicResult;
         }
@@ -214,22 +358,35 @@
         const target = getPieceAt(boardMap, to.row, to.col);
         switch (piece.code.toUpperCase()) {
             case "R":
-                return isLegalRookMove(from, to, boardMap);
+                basicResult = isLegalRookMove(from, to, boardMap);
+                break;
             case "N":
-                return isLegalKnightMove(from, to, boardMap);
+                basicResult = isLegalKnightMove(from, to, boardMap);
+                break;
             case "B":
-                return isLegalBishopMove(piece, from, to, boardMap);
+                basicResult = isLegalBishopMove(piece, from, to, boardMap);
+                break;
             case "A":
-                return isLegalAdvisorMove(piece, from, to);
+                basicResult = isLegalAdvisorMove(piece, from, to);
+                break;
             case "K":
-                return isLegalKingMove(piece, from, to);
+                basicResult = isLegalKingMove(piece, from, to);
+                break;
             case "C":
-                return isLegalCannonMove(from, to, boardMap, target);
+                basicResult = isLegalCannonMove(from, to, boardMap, target);
+                break;
             case "P":
-                return isLegalPawnMove(piece, from, to);
+                basicResult = isLegalPawnMove(piece, from, to);
+                break;
             default:
                 return invalid("暂不支持这个棋子的走法");
         }
+
+        if (!basicResult.ok) {
+            return basicResult;
+        }
+
+        return isLegalPositionAfterMove(piece, from, to, pieces);
     }
 
     function addCandidate(candidates, row, col) {
@@ -366,6 +523,7 @@
 
     window.ChessRules = {
         isLegalMove,
+        isInCheck,
         buildBoardMap,
         isSameSide,
         getLegalMoves

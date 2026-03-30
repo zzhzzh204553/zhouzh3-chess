@@ -42,7 +42,14 @@ const boardBase = {
 };
 
 const fenInput = document.getElementById("fenInput");
+const movesInput = document.getElementById("movesInput");
 const renderButton = document.getElementById("renderButton");
+const parseMovesButton = document.getElementById("parseMovesButton");
+const startButton = document.getElementById("startButton");
+const undoButton = document.getElementById("undoButton");
+const redoButton = document.getElementById("redoButton");
+const endButton = document.getElementById("endButton");
+const moveList = document.getElementById("moveList");
 const board = document.getElementById("board");
 const message = document.getElementById("message");
 
@@ -54,6 +61,27 @@ let messageTimer = null;
 let currentSide = "w";
 let legalMoves = [];
 let audioContext = null;
+let historySnapshots = [];
+let historyIndex = 0;
+let moveHistory = [];
+
+const chineseFiles = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
+const pieceLabels = {
+    R: "车",
+    N: "马",
+    B: "相",
+    A: "仕",
+    K: "帅",
+    C: "炮",
+    P: "兵",
+    r: "车",
+    n: "马",
+    b: "象",
+    a: "士",
+    k: "将",
+    c: "炮",
+    p: "卒"
+};
 
 function normalizeSide(value) {
     if (!value) {
@@ -82,6 +110,318 @@ function rebuildFenSuffix(side, suffix) {
     }
     parts[0] = side;
     return parts.join(" ");
+}
+
+function clonePieces(pieces) {
+    return pieces.map(piece => ({
+        code: piece.code,
+        row: piece.row,
+        col: piece.col
+    }));
+}
+
+function cloneMove(move) {
+    if (!move) {
+        return null;
+    }
+    return {
+        from: {...move.from},
+        to: {...move.to}
+    };
+}
+
+function createSnapshot() {
+    return createSnapshotFromState(currentPieces, currentSide, currentFenSuffix, lastMove);
+}
+
+function createSnapshotFromState(pieces, side, fenSuffix, move) {
+    return {
+        pieces: clonePieces(pieces),
+        side,
+        fenSuffix,
+        lastMove: cloneMove(move)
+    };
+}
+
+function getFileLabel(col, isRed) {
+    const file = isRed ? 9 - col : col + 1;
+    return isRed ? chineseFiles[file - 1] : String(file);
+}
+
+function getMoveDistance(from, to) {
+    return from.col === to.col
+        ? Math.abs(to.row - from.row)
+        : Math.abs(to.col - from.col);
+}
+
+function getMoveAction(piece, from, to) {
+    if (from.row === to.row) {
+        return "平";
+    }
+    const isRedPiece = piece.code === piece.code.toUpperCase();
+    const forward = isRedPiece ? to.row < from.row : to.row > from.row;
+    return forward ? "进" : "退";
+}
+
+function generateMoveNotation(piece, from, to) {
+    const isRedPiece = piece.code === piece.code.toUpperCase();
+    const pieceName = pieceLabels[piece.code] || piece.code;
+    const action = getMoveAction(piece, from, to);
+    const startFile = getFileLabel(from.col, isRedPiece);
+    const targetFile = getFileLabel(to.col, isRedPiece);
+    let targetText;
+
+    switch (piece.code.toUpperCase()) {
+        case "N":
+        case "B":
+        case "A":
+            targetText = targetFile;
+            break;
+        case "R":
+        case "C":
+        case "K":
+        case "P":
+            targetText = action === "平"
+                ? targetFile
+                : (isRedPiece ? chineseFiles[getMoveDistance(from, to) - 1] : String(getMoveDistance(from, to)));
+            break;
+        default:
+            targetText = action === "平" ? targetFile : String(getMoveDistance(from, to));
+            break;
+    }
+
+    return `${pieceName}${startFile}${action}${targetText}`;
+}
+
+function syncFenInput() {
+    fenInput.value = piecesToFen(currentPieces, currentFenSuffix);
+}
+
+function splitMoveSequence(text) {
+    const normalized = text.trim();
+    if (!normalized) {
+        return [];
+    }
+    if (normalized.length % 4 !== 0) {
+        throw new Error("走子序列长度必须是 4 的倍数");
+    }
+
+    const moves = [];
+    for (let i = 0; i < normalized.length; i += 4) {
+        moves.push(normalized.slice(i, i + 4));
+    }
+    return moves;
+}
+
+function parseSquare(square) {
+    if (!/^[a-i][0-9]$/i.test(square)) {
+        throw new Error("坐标格式错误");
+    }
+
+    return {
+        col: square.toLowerCase().charCodeAt(0) - 97,
+        row: 9 - Number(square[1])
+    };
+}
+
+function applyMoveToState(state, moveText, stepNumber) {
+    const from = parseSquare(moveText.slice(0, 2));
+    const to = parseSquare(moveText.slice(2, 4));
+    const piece = state.pieces.find(current => current.row === from.row && current.col === from.col);
+
+    if (!piece) {
+        throw new Error(`第 ${stepNumber} 步起点没有棋子`);
+    }
+
+    const isRedPiece = piece.code === piece.code.toUpperCase();
+    const movingSide = isRedPiece ? "w" : "b";
+    if (movingSide !== state.side) {
+        throw new Error(`第 ${stepNumber} 步非法：当前轮到${getSideLabel(state.side)}走棋`);
+    }
+
+    const moveResult = window.ChessRules.isLegalMove(piece, from, to, state.pieces);
+    if (!moveResult.ok) {
+        throw new Error(`第 ${stepNumber} 步非法：${moveResult.message}`);
+    }
+
+    const notation = generateMoveNotation(piece, from, to);
+    const isCapture = state.pieces.some(current =>
+        current !== piece && current.row === to.row && current.col === to.col
+    );
+
+    state.lastMove = { from, to };
+    state.pieces = state.pieces.filter(current =>
+        current === piece || current.row !== to.row || current.col !== to.col
+    );
+    piece.row = to.row;
+    piece.col = to.col;
+    state.side = state.side === "w" ? "b" : "w";
+    state.fenSuffix = rebuildFenSuffix(state.side, state.fenSuffix);
+    state.moveHistory.push({
+        step: state.historySnapshots.length,
+        side: movingSide,
+        notation
+    });
+    state.historySnapshots.push(
+        createSnapshotFromState(state.pieces, state.side, state.fenSuffix, state.lastMove)
+    );
+    state.historyIndex = state.historySnapshots.length - 1;
+    return isCapture;
+}
+
+function parseMoveSequence() {
+    const fenResult = parseFen(fenInput.value.trim());
+    if (fenResult.error) {
+        fenInput.classList.add("error");
+        throw new Error(fenResult.error);
+    }
+
+    renderBoard();
+
+    const moveTexts = splitMoveSequence(movesInput.value);
+    if (moveTexts.length === 0) {
+        showMessage("已按当前 FEN 重置局面");
+        return;
+    }
+
+    const initialSide = "w";
+    const initialFenSuffix = rebuildFenSuffix(initialSide, currentFenSuffix);
+    const state = {
+        pieces: clonePieces(currentPieces),
+        side: initialSide,
+        fenSuffix: initialFenSuffix,
+        lastMove: cloneMove(lastMove),
+        historySnapshots: [createSnapshotFromState(currentPieces, initialSide, initialFenSuffix, lastMove)],
+        historyIndex: 0,
+        moveHistory: []
+    };
+
+    let lastCapture = false;
+    moveTexts.forEach((moveText, index) => {
+        try {
+            lastCapture = applyMoveToState(state, moveText, index + 1);
+        } catch (error) {
+            throw new Error(error.message.includes(`第 ${index + 1} 步`) ? error.message : `第 ${index + 1} 步${error.message}`);
+        }
+    });
+
+    currentPieces = state.pieces;
+    currentSide = state.side;
+    currentFenSuffix = state.fenSuffix;
+    lastMove = state.lastMove;
+    historySnapshots = state.historySnapshots;
+    historyIndex = state.historyIndex;
+    moveHistory = state.moveHistory;
+    selectedPiece = null;
+    legalMoves = [];
+    syncFenInput();
+    if (window.ChessRules.isInCheck(currentSide === "w", currentPieces)) {
+        showMessage("将军");
+    } else {
+        showMessage(`已解析 ${moveTexts.length} 步棋谱`);
+    }
+    if (lastCapture) {
+        playMoveSound(true);
+    }
+    renderPieces(currentPieces);
+    renderMoveHistory();
+}
+
+function setHistoryToCurrentState() {
+    historySnapshots = [createSnapshot()];
+    historyIndex = 0;
+    moveHistory = [];
+}
+
+function updateHistoryButtons() {
+    startButton.disabled = historyIndex <= 0;
+    undoButton.disabled = historyIndex <= 0;
+    redoButton.disabled = historyIndex >= historySnapshots.length - 1;
+    endButton.disabled = historyIndex >= historySnapshots.length - 1;
+}
+
+function renderMoveHistory() {
+    moveList.innerHTML = "";
+
+    if (moveHistory.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "move-list-empty";
+        empty.textContent = "暂无走子记录。走一步棋后，这里会显示完整棋谱。";
+        moveList.appendChild(empty);
+        updateHistoryButtons();
+        return;
+    }
+
+    for (let i = 0; i < moveHistory.length; i += 2) {
+        const row = document.createElement("div");
+        row.className = "move-row";
+
+        const round = document.createElement("div");
+        round.className = "move-round";
+        round.textContent = `${Math.floor(i / 2) + 1}.`;
+        row.appendChild(round);
+
+        const moves = [moveHistory[i], moveHistory[i + 1]];
+        moves.forEach(entry => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "move-entry";
+
+            if (!entry) {
+                button.classList.add("empty");
+                row.appendChild(button);
+                return;
+            }
+
+            button.classList.add(entry.side === "w" ? "red" : "black");
+            if (historyIndex === entry.step) {
+                button.classList.add("active");
+            }
+
+            const text = document.createElement("div");
+            text.className = "move-text";
+            text.textContent = entry.notation;
+
+            button.appendChild(text);
+            button.addEventListener("click", () => {
+                restoreHistoryStep(entry.step);
+            });
+            row.appendChild(button);
+        });
+
+        moveList.appendChild(row);
+    }
+
+    updateHistoryButtons();
+}
+
+function restoreHistoryStep(step) {
+    const snapshot = historySnapshots[step];
+    if (!snapshot) {
+        return;
+    }
+
+    historyIndex = step;
+    currentPieces = clonePieces(snapshot.pieces);
+    currentSide = snapshot.side;
+    currentFenSuffix = snapshot.fenSuffix;
+    lastMove = cloneMove(snapshot.lastMove);
+    selectedPiece = null;
+    legalMoves = [];
+    syncFenInput();
+    renderPieces(currentPieces);
+    renderMoveHistory();
+}
+
+function appendHistoryEntry(entry) {
+    if (historyIndex < historySnapshots.length - 1) {
+        historySnapshots = historySnapshots.slice(0, historyIndex + 1);
+        moveHistory = moveHistory.slice(0, historyIndex);
+    }
+
+    moveHistory.push(entry);
+    historySnapshots.push(createSnapshot());
+    historyIndex = historySnapshots.length - 1;
 }
 
 function parseFen(fen) {
@@ -148,7 +488,7 @@ function showMessage(text) {
     messageTimer = window.setTimeout(() => {
         message.classList.remove("visible");
         message.textContent = "";
-    }, 1800);
+    }, 3000);
 }
 
 function getAudioContext() {
@@ -254,11 +594,12 @@ function renderLastMove(metrics) {
         return;
     }
 
+    const pieceOffsetX = 1;
     const markerOffsetX = -2;
     const lineOffsetX = -1;
-    const fromX = metrics.startX + lastMove.from.col * metrics.stepX + markerOffsetX;
+    const fromX = metrics.startX + lastMove.from.col * metrics.stepX + pieceOffsetX + markerOffsetX;
     const fromY = metrics.startY + lastMove.from.row * metrics.stepY;
-    const toX = metrics.startX + lastMove.to.col * metrics.stepX + markerOffsetX;
+    const toX = metrics.startX + lastMove.to.col * metrics.stepX + pieceOffsetX + markerOffsetX;
     const toY = metrics.startY + lastMove.to.row * metrics.stepY;
 
     const svgNS = "http://www.w3.org/2000/svg";
@@ -323,7 +664,7 @@ function renderPieces(pieces) {
         }
         img.src = pieceImages[piece.code];
         img.alt = pieceNames[piece.code];
-        img.style.left = `${metrics.startX + piece.col * metrics.stepX}px`;
+        img.style.left = `${metrics.startX + piece.col * metrics.stepX + 1}px`;
         img.style.top = `${metrics.startY + piece.row * metrics.stepY}px`;
         img.addEventListener("click", event => {
             event.stopPropagation();
@@ -409,6 +750,9 @@ function moveSelectedPieceTo(row, col) {
         return;
     }
 
+    const movingPieceCode = selectedPiece.code;
+    const notation = generateMoveNotation(selectedPiece, from, to);
+
     lastMove = {
         from,
         to
@@ -423,11 +767,20 @@ function moveSelectedPieceTo(row, col) {
     selectedPiece.col = col;
     currentSide = currentSide === "w" ? "b" : "w";
     currentFenSuffix = rebuildFenSuffix(currentSide, currentFenSuffix);
-    fenInput.value = piecesToFen(currentPieces, currentFenSuffix);
+    appendHistoryEntry({
+        step: historyIndex + 1,
+        side: movingPieceCode === movingPieceCode.toUpperCase() ? "w" : "b",
+        notation
+    });
+    syncFenInput();
     selectedPiece = null;
     legalMoves = [];
     playMoveSound(isCapture);
+    if (window.ChessRules.isInCheck(currentSide === "w", currentPieces)) {
+        showMessage("将军");
+    }
     renderPieces(currentPieces);
+    renderMoveHistory();
 }
 
 function resetBoardState() {
@@ -437,7 +790,12 @@ function resetBoardState() {
     lastMove = null;
     currentSide = "w";
     legalMoves = [];
+    historySnapshots = [];
+    historyIndex = 0;
+    moveHistory = [];
     board.innerHTML = "";
+    moveList.innerHTML = "";
+    updateHistoryButtons();
     window.clearTimeout(messageTimer);
     message.classList.remove("visible");
     message.textContent = "";
@@ -450,6 +808,7 @@ function renderBoard() {
 
     if (result.error) {
         fenInput.classList.add("error");
+        updateHistoryButtons();
         alert(result.error);
         return;
     }
@@ -458,15 +817,53 @@ function renderBoard() {
     currentPieces = result.pieces;
     currentSide = result.side;
     currentFenSuffix = rebuildFenSuffix(currentSide, result.suffix);
-    fenInput.value = piecesToFen(currentPieces, currentFenSuffix);
+    syncFenInput();
     legalMoves = [];
+    setHistoryToCurrentState();
     renderPieces(currentPieces);
+    renderMoveHistory();
 }
 
 renderButton.addEventListener("click", renderBoard);
+parseMovesButton.addEventListener("click", () => {
+    try {
+        parseMoveSequence();
+    } catch (error) {
+        showMessage(error.message);
+    }
+});
+startButton.addEventListener("click", () => {
+    if (historyIndex > 0) {
+        restoreHistoryStep(0);
+    }
+});
+undoButton.addEventListener("click", () => {
+    if (historyIndex > 0) {
+        restoreHistoryStep(historyIndex - 1);
+    }
+});
+redoButton.addEventListener("click", () => {
+    if (historyIndex < historySnapshots.length - 1) {
+        restoreHistoryStep(historyIndex + 1);
+    }
+});
+endButton.addEventListener("click", () => {
+    if (historyIndex < historySnapshots.length - 1) {
+        restoreHistoryStep(historySnapshots.length - 1);
+    }
+});
 fenInput.addEventListener("keydown", event => {
     if (event.key === "Enter") {
         renderBoard();
+    }
+});
+movesInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+        try {
+            parseMoveSequence();
+        } catch (error) {
+            showMessage(error.message);
+        }
     }
 });
 
