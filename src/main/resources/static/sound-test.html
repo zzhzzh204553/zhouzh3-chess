@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>棋类音效试听（20种声音）</title>
+</head>
+<body>
+<h2>棋类音效试听（20种声音）</h2>
+<div id="buttons"></div>
+
+<script>
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function makeTone(freq, start, duration, wave="sine", gain=0.2) {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        g.gain.setValueAtTime(gain, ctx.currentTime + start);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        osc.connect(g).connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+    }
+
+    function makeNoise(start, duration, filterType="lowpass") {
+        const bufferSize = ctx.sampleRate * duration;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = filterType;
+        filter.frequency.value = 1000;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.3, ctx.currentTime + start);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        noise.connect(filter).connect(g).connect(ctx.destination);
+        noise.start(ctx.currentTime + start);
+        noise.stop(ctx.currentTime + start + duration);
+    }
+
+    const sounds = {
+        select: () => makeTone(600, 0, 0.1, "sine", 0.1),
+        place: () => { makeTone(200, 0, 0.15); makeTone(300, 0.2, 0.15); },
+        capture: () => { makeTone(400, 0, 0.2, "triangle"); makeTone(600, 0.25, 0.2, "triangle"); },
+        check: () => { makeTone(400, 0, 0.1, "square"); makeTone(600, 0.1, 0.1, "square"); makeTone(800, 0.2, 0.1, "square"); },
+        victory: () => { makeTone(500, 0, 0.2); makeTone(700, 0.25, 0.2); makeTone(900, 0.5, 0.2); },
+        defeat: () => { makeTone(300, 0, 0.3, "square"); makeTone(150, 0.35, 0.3, "square"); },
+        error: () => makeTone(200, 0, 0.3, "sawtooth"),
+        notify: () => { makeTone(800, 0, 0.1); makeTone(1000, 0.15, 0.1); },
+        drum: () => makeNoise(0, 0.2, "lowpass"),
+        cymbal: () => makeNoise(0, 0.3, "highpass"),
+        wind: () => makeNoise(0, 1.0, "bandpass"),
+        explosion: () => { makeNoise(0, 0.5, "lowpass"); makeTone(100, 0, 0.5); },
+        magic: () => { makeTone(600, 0, 0.1, "triangle"); makeTone(900, 0.15, 0.1, "triangle"); makeTone(1200, 0.3, 0.1, "triangle"); },
+        countdown: () => { for (let i=0;i<5;i++) makeTone(700, i*0.5, 0.1); },
+        flash: () => { makeTone(600, 0, 0.1); makeTone(900, 0.1, 0.1); makeTone(600, 0.2, 0.1); },
+        chord: () => { makeTone(261.6, 0, 0.5); makeTone(329.6, 0, 0.5); makeTone(392.0, 0, 0.5); },
+        arpeggio: () => { makeTone(261.6, 0, 0.2); makeTone(329.6, 0.25, 0.2); makeTone(392.0, 0.5, 0.2); makeTone(523.2, 0.75, 0.2); },
+        rain: () => makeNoise(0, 1.0, "highpass"),
+        machine: () => { makeTone(200, 0, 0.5, "sawtooth"); makeTone(400, 0.5, 0.5, "sawtooth"); },
+        sciFi: () => { makeTone(300, 0, 0.5, "sine"); makeTone(600, 0.25, 0.5, "sine"); }
+    };
+
+    const container = document.getElementById("buttons");
+    Object.keys(sounds).forEach(name => {
+        const btn = document.createElement("button");
+        btn.textContent = name;
+        btn.onclick = sounds[name];
+        container.appendChild(btn);
+        container.appendChild(document.createTextNode(" "));
+    });
+</script>
+</body>
+</html>

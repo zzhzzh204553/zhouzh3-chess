@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>象棋棋盘渲染</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="controls">
+    <label for="fenInput">输入象棋 FEN 字符串：</label>
+    <div class="control-row">
+        <input type="text" id="fenInput" value="rnbakabnr/9/1c5c1/p1p1p1p1p/9/2P6/P3P1P1P/1C5C1/9/RNBAKABNR">
+        <button type="button" id="renderButton">渲染棋盘</button>
+    </div>
+</div>
+
+<div class="message" id="message"></div>
+<div class="board" id="board"></div>
+
+<script src="rules.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

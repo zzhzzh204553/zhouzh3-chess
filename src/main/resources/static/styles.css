@@ -1,0 +1,164 @@
+:root {
+    --board-width: min(calc(100vw - 48px), calc((100vh - 110px) * 570 / 637));
+}
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 10px 16px;
+    box-sizing: border-box;
+}
+
+.controls {
+    width: min(960px, calc(100vw - 48px));
+    margin: 0 auto;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.board {
+    position: relative;
+    width: var(--board-width);
+    aspect-ratio: 570 / 637;
+    margin: 2px auto;
+    background-image: url('images/chessboard.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+.message {
+    min-height: 24px;
+    margin: 4px auto 6px;
+    width: min(960px, calc(100vw - 48px));
+    color: #a33;
+    font-size: 14px;
+    line-height: 24px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.message.visible {
+    opacity: 1;
+}
+
+.piece {
+    position: absolute;
+    width: calc(100% * 60 / 570);
+    height: auto;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
+
+.piece.selected {
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.95));
+}
+
+.move-line {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.move-marker {
+    position: absolute;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.move-marker.from {
+    width: calc(100% * 14 / 570);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.85);
+}
+
+.move-marker.to {
+    width: calc(100% * 54 / 570);
+    border: 4px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
+    background: transparent;
+}
+
+.legal-move {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.legal-move.dot {
+    width: calc(100% * 16 / 570);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: rgba(56, 189, 248, 0.75);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.55);
+}
+
+.legal-move.capture {
+    width: calc(100% * 52 / 570);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 3px solid rgba(56, 189, 248, 0.85);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input.error {
+    border-color: red;
+    background-color: #ffe5e5;
+}
+
+button {
+    padding: 8px 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    :root {
+        --board-width: min(calc(100vw - 24px), calc((100vh - 165px) * 570 / 637));
+    }
+
+    body {
+        padding: 8px 12px;
+    }
+
+    .controls {
+        width: calc(100vw - 24px);
+    }
+
+    .message {
+        width: calc(100vw - 24px);
+    }
+
+    .control-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    button {
+        width: 100%;
+    }
+}
