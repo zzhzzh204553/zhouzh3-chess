@@ -36,8 +36,8 @@ public class ImageFenMain {
 
     public static void main(String[] args) throws IOException {
         Path imageDir = Path.of("src", "main", "resources", "images");
-        Path screenshot = imageDir.resolve("3.jpg");
-        Path outputDir = Path.of("C:\\Users\\haig\\Desktop\\素材\\sample\\3");
+        Path screenshot = imageDir.resolve("2.jpg");
+        Path outputDir = Path.of("C:\\Users\\haig\\Desktop\\素材\\sample\\2");
 
         ImageFenMain imageFenMain = new ImageFenMain();
 

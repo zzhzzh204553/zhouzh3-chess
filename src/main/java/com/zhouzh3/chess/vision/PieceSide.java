@@ -23,7 +23,7 @@ public enum PieceSide {
 
 
     public static PieceSide fromScore(long redScore, long darkScore) {
-        if (darkScore == 0) return EMPTY;
+        if (darkScore <= 1000) return EMPTY;
         return redScore >= darkScore ? RED : BLACK;
     }
 }
