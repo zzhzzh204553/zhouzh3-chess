@@ -26,6 +26,7 @@ public final class EvalResult {
         this.blackScore = blackScore;
         this.redPerspectiveScore = redScore - blackScore;
         this.sideToMove = sideToMove;
+//        sideToMove=='w'，表示下一步红方走，现在已经走的应该是黑方
         this.sideToMoveScore = sideToMove == 'w'
                 ? redPerspectiveScore
                 : -redPerspectiveScore;

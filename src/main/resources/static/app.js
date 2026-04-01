@@ -42,9 +42,9 @@ const boardBase = {
 };
 
 const fenInput = document.getElementById("fenInput");
+const currentFenDisplay = document.getElementById("currentFenDisplay");
 const movesInput = document.getElementById("movesInput");
-const renderButton = document.getElementById("renderButton");
-const parseMovesButton = document.getElementById("parseMovesButton");
+const applyButton = document.getElementById("applyButton");
 const startButton = document.getElementById("startButton");
 const undoButton = document.getElementById("undoButton");
 const redoButton = document.getElementById("redoButton");
@@ -55,6 +55,7 @@ const message = document.getElementById("message");
 
 let currentPieces = [];
 let currentFenSuffix = "";
+let originalFenInput = "";
 let selectedPiece = null;
 let lastMove = null;
 let messageTimer = null;
@@ -194,7 +195,27 @@ function generateMoveNotation(piece, from, to) {
 }
 
 function syncFenInput() {
-    fenInput.value = piecesToFen(currentPieces, currentFenSuffix);
+    fenInput.value = originalFenInput;
+}
+
+function syncCurrentFenDisplay() {
+    currentFenDisplay.value = piecesToFen(currentPieces, currentFenSuffix);
+}
+
+function syncFenViews() {
+    syncFenInput();
+    syncCurrentFenDisplay();
+}
+
+function applyParsedFen(result) {
+    currentPieces = result.pieces;
+    currentSide = result.side;
+    currentFenSuffix = rebuildFenSuffix(currentSide, result.suffix);
+    legalMoves = [];
+    setHistoryToCurrentState();
+    syncFenViews();
+    renderPieces(currentPieces);
+    renderMoveHistory();
 }
 
 function splitMoveSequence(text) {
@@ -314,7 +335,7 @@ function parseMoveSequence() {
     moveHistory = state.moveHistory;
     selectedPiece = null;
     legalMoves = [];
-    syncFenInput();
+    syncFenViews();
     if (window.ChessRules.isInCheck(currentSide === "w", currentPieces)) {
         showMessage("将军");
     } else {
@@ -346,7 +367,7 @@ function renderMoveHistory() {
     if (moveHistory.length === 0) {
         const empty = document.createElement("div");
         empty.className = "move-list-empty";
-        empty.textContent = "暂无走子记录。走一步棋后，这里会显示完整棋谱。";
+        empty.textContent = "暂无走子记录。每走一步棋会显示中文棋谱。";
         moveList.appendChild(empty);
         updateHistoryButtons();
         return;
@@ -408,7 +429,7 @@ function restoreHistoryStep(step) {
     lastMove = cloneMove(snapshot.lastMove);
     selectedPiece = null;
     legalMoves = [];
-    syncFenInput();
+    syncFenViews();
     renderPieces(currentPieces);
     renderMoveHistory();
 }
@@ -772,7 +793,7 @@ function moveSelectedPieceTo(row, col) {
         side: movingPieceCode === movingPieceCode.toUpperCase() ? "w" : "b",
         notation
     });
-    syncFenInput();
+    syncFenViews();
     selectedPiece = null;
     legalMoves = [];
     playMoveSound(isCapture);
@@ -814,24 +835,24 @@ function renderBoard() {
     }
 
     fenInput.classList.remove("error");
-    currentPieces = result.pieces;
-    currentSide = result.side;
-    currentFenSuffix = rebuildFenSuffix(currentSide, result.suffix);
-    syncFenInput();
-    legalMoves = [];
-    setHistoryToCurrentState();
-    renderPieces(currentPieces);
-    renderMoveHistory();
+    originalFenInput = fen;
+    applyParsedFen(result);
 }
 
-renderButton.addEventListener("click", renderBoard);
-parseMovesButton.addEventListener("click", () => {
+function applyPosition() {
+    if (!movesInput.value.trim()) {
+        renderBoard();
+        return;
+    }
+
     try {
         parseMoveSequence();
     } catch (error) {
         showMessage(error.message);
     }
-});
+}
+
+applyButton.addEventListener("click", applyPosition);
 startButton.addEventListener("click", () => {
     if (historyIndex > 0) {
         restoreHistoryStep(0);
@@ -854,16 +875,12 @@ endButton.addEventListener("click", () => {
 });
 fenInput.addEventListener("keydown", event => {
     if (event.key === "Enter") {
-        renderBoard();
+        applyPosition();
     }
 });
 movesInput.addEventListener("keydown", event => {
     if (event.key === "Enter") {
-        try {
-            parseMoveSequence();
-        } catch (error) {
-            showMessage(error.message);
-        }
+        applyPosition();
     }
 });
 

@@ -14,19 +14,13 @@
 
     <aside class="sidebar">
         <section class="panel">
-            <label for="fenInput">输入象棋 FEN 字符串：</label>
             <div class="control-row">
-                <input type="text" id="fenInput" value="rnbakabnr/9/1c5c1/p1p1p1p1p/9/2P6/P3P1P1P/1C5C1/9/RNBAKABNR">
-                <button type="button" id="renderButton">渲染棋盘</button>
+                <input type="text" id="fenInput" placeholder="输入fen" value="rnbakabnr/9/1c5c1/p1p1p1p1p/9/2P6/P3P1P1P/1C5C1/9/RNBAKABNR">
+                <input type="text" id="movesInput" placeholder="输入走子序列">
+                <button type="button" id="applyButton">应用局面</button>
             </div>
-        </section>
-
-        <section class="panel">
-            <label for="movesInput">输入坐标走子序列：</label>
-            <div class="control-row">
-                <input type="text" id="movesInput" placeholder="按红方视角坐标，例如 h2e2">
-                <button type="button" id="parseMovesButton">解析棋谱</button>
-            </div>
+            <label for="currentFenDisplay" class="sub-label">当前局面</label>
+            <input type="text" id="currentFenDisplay" readonly style="width: 100%;">
         </section>
 
         <section class="panel move-panel">
