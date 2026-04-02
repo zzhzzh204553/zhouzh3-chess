@@ -51,8 +51,12 @@ public class Board {
                     sb.append(c);
                 }
             }
-            if (empty > 0) sb.append(empty);
-            if (i < ROWS - 1) sb.append('/');
+            if (empty > 0) {
+                sb.append(empty);
+            }
+            if (i < ROWS - 1) {
+                sb.append('/');
+            }
         }
         return sb.toString();
     }

@@ -1,3 +1,5 @@
 spring:
     application:
         name: zhouzh3-chess
+    profiles:
+        active: dev

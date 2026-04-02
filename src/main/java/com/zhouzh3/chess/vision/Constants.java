@@ -32,12 +32,10 @@ public final class Constants {
     public static final int START_COL = 0;
     public static final int END_COL = 8;
     public static final int SIZE = 121;
+
     public static final int COMPARE_RADIUS = SIZE / 2 - RADIUS_OFFSET;
     public static final int CENTER = SIZE / 2 - Y_OFFSET;
-    public static final int BACKGROUND_R = 0xFF;
-    public static final int BACKGROUND_G = 0xCC;
-    public static final int BACKGROUND_B = 0x90;
-    public static final int EDGE_OFFSET = 10;
-    public static final double COLOR_TOLERANCE = 26.0;
+
+
 }
 

@@ -45,6 +45,8 @@ const fenInput = document.getElementById("fenInput");
 const currentFenDisplay = document.getElementById("currentFenDisplay");
 const movesInput = document.getElementById("movesInput");
 const applyButton = document.getElementById("applyButton");
+const imageInput = document.getElementById("imageInput");
+const imageApplyButton = document.getElementById("imageApplyButton");
 const startButton = document.getElementById("startButton");
 const undoButton = document.getElementById("undoButton");
 const redoButton = document.getElementById("redoButton");
@@ -852,7 +854,40 @@ function applyPosition() {
     }
 }
 
+async function applyImagePosition() {
+    const file = imageInput.files[0];
+    if (!file) {
+        showMessage("请选择图片");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const response = await fetch("/api/image-fen", {
+            method: "POST",
+            body: formData
+        });
+        const data = await response.json();
+        const fen = (data.fen || "").trim();
+
+        if (!response.ok) {
+            throw new Error(data.message || "图片识别失败");
+        }
+        if (!fen) {
+            throw new Error("未返回fen");
+        }
+
+        fenInput.value = fen;
+        applyPosition();
+    } catch (error) {
+        showMessage(error.message || "图片识别失败");
+    }
+}
+
 applyButton.addEventListener("click", applyPosition);
+imageApplyButton.addEventListener("click", applyImagePosition);
 startButton.addEventListener("click", () => {
     if (historyIndex > 0) {
         restoreHistoryStep(0);

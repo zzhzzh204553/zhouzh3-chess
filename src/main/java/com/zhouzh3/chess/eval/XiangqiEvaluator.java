@@ -13,12 +13,12 @@ public final class XiangqiEvaluator {
         int redScore = evaluateSide(context, true);
         int blackScore = evaluateSide(context, false);
 
-        return new EvalResult(redScore, blackScore, position.getSideToMove());
+        return new EvalResult(redScore, blackScore, position.sideToMove());
     }
 
     private EvalContext buildContext(ParsedPosition position) {
         EvalContext context = new EvalContext(position);
-        char[][] board = position.getBoard();
+        char[][] board = position.board();
 
         for (int row = 0; row < ParsedPosition.ROWS; row++) {
             for (int col = 0; col < ParsedPosition.COLS; col++) {
@@ -27,7 +27,7 @@ public final class XiangqiEvaluator {
                     continue;
                 }
 
-                PieceState pieceState = new PieceState(piece, row, col);
+                PieceState pieceState = new PieceState(row, col, piece);
                 boolean red = isRed(piece);
                 if (red) {
                     context.getRedPieces().add(pieceState);
@@ -69,9 +69,9 @@ public final class XiangqiEvaluator {
         List<PieceState> pieces = red ? context.getRedPieces() : context.getBlackPieces();
 
         for (PieceState pieceState : pieces) {
-            char piece = pieceState.getPiece();
-            int row = pieceState.getRow();
-            int col = pieceState.getCol();
+            char piece = pieceState.piece();
+            int row = pieceState.row();
+            int col = pieceState.col();
 
             score += materialValue(piece);
             score += positionalBonus(piece, row, col);
@@ -182,12 +182,12 @@ public final class XiangqiEvaluator {
         List<PieceState> pieces = red ? context.getRedPieces() : context.getBlackPieces();
 
         for (PieceState pieceState : pieces) {
-            if (pieceState.getPiece() != pawn) {
+            if (pieceState.piece() != pawn) {
                 continue;
             }
 
-            int row = pieceState.getRow();
-            int col = pieceState.getCol();
+            int row = pieceState.row();
+            int col = pieceState.col();
 
             if (hasAdjacentFriendlyPawn(position, row, col, pawn)) {
                 score += 12;
@@ -486,7 +486,7 @@ public final class XiangqiEvaluator {
 
     private int countAttackers(ParsedPosition position, int targetRow, int targetCol, boolean attackerRed) {
         int count = 0;
-        char[][] board = position.getBoard();
+        char[][] board = position.board();
 
         for (int row = 0; row < ParsedPosition.ROWS; row++) {
             for (int col = 0; col < ParsedPosition.COLS; col++) {

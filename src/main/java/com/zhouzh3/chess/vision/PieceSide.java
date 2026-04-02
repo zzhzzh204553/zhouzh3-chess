@@ -1,5 +1,9 @@
 package com.zhouzh3.chess.vision;
 
+/**
+ * @author haig
+ */
+
 public enum PieceSide {
     BLACK("黑色", 1),
     RED("红色", 2),
@@ -23,7 +27,10 @@ public enum PieceSide {
 
 
     public static PieceSide fromScore(long redScore, long darkScore) {
-        if (darkScore <= 1000) return EMPTY;
+//        darkScore == 303 || darkScore == 109 || darkScore == 202
+        if (darkScore == 0 ) {
+            return EMPTY;
+        }
         return redScore >= darkScore ? RED : BLACK;
     }
 }

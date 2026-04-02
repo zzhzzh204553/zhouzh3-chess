@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="false">
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- 控制台的日志输出样式 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%yellow(%d{yyyy-MM-dd HH:mm:ss.SSS}) %highlight(%-5level) %red([%X{traceId}]) %blue([%thread]) %green([%logger{35}::%M::%L]) : %msg%n"/>
+
+    <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
+    <property name="APP_NAME" value="${spring.application.name}"/>
+    <property name="LOG_PATH" value="${logging.file.path}"/>
+    <property name="logPath" value="${logging.file.path}"/>
+    <springProperty scope="context" name="PROFILE" source="spring.profiles.active"/>
+    <springProperty scope="context" name="topicId" source="cls.topic.id"/>
+
+    <!-- 控制台输出 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"> <!-- 定义输出到console -->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder"> <!-- 定义JSON输出 -->
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <pattern>
+                    <pattern>
+                        {
+                        "level": "%level",
+                        "traceID": "%X{traceId}",
+                        "thread": "%thread",
+                        "class": "%logger{1.}:%L",
+                        "message": "%message"
+                        <!-- 此处可按需添加其他字段 -->
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT2" class="ch.qos.logback.core.ConsoleAppender">
+        <!--彩色输出-->
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 日志输出级别 -->
+    <!--    <springProfile name="uat,pre,pro">-->
+    <!--        <root level="INFO">-->
+    <!--            <appender-ref ref="STDOUT"/>-->
+    <!--        </root>-->
+    <!--    </springProfile>-->
+
+    <springProfile name="local,dev,test">
+        <root level="debug">
+            <appender-ref ref="STDOUT2"/>
+        </root>
+    </springProfile>
+
+    <logger name="com.alibaba.csp.sentinel" level="DEBUG"/>
+    <logger name="com.alibaba.nacos" level="INFO"/>
+    <logger name="com.baomidou" level="DEBUG"/>
+    <logger name="com.github.benmanes.caffeine.cache" level="DEBUG"/>
+    <logger name="org.apache.ibatis" level="DEBUG"/>
+    <logger name="org.apache.rocketmq" level="DEBUG"/>
+    <logger name="org.mybatis" level="DEBUG"/>
+    <logger name="org.mybatis" level="DEBUG"/>
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.springframework.cache" level="DEBUG"/>
+    <logger name="org.springframework.cloud.loadbalancer.cache" level="DEBUG"/>
+    <logger name="org.springframework.cloud.openfeign" level="DEBUG"/>
+    <logger name="org.springframework.cloud.stream.binder.rocketmq" level="DEBUG"/>
+    <logger name="org.springframework.data.redis.cache" level="DEBUG"/>
+
+    <logger name="com.zhouzh3.lotus.api.feign" level="DEBUG"/>
+
+
+</configuration>

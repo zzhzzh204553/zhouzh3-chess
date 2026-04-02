@@ -23,18 +23,45 @@ public class ChessFen {
         // 棋子类型映射
         char piece;
         switch (move.pieceStr) {
-            case "兵": piece = 'P'; break;
-            case "卒": piece = 'p'; isRed = false; break;
-            case "炮": piece = isRed ? 'C' : 'c'; break;
-            case "车": piece = isRed ? 'R' : 'r'; break;
-            case "马": piece = isRed ? 'N' : 'n'; break;
-            case "相": piece = 'B'; break;
-            case "象": piece = 'b'; isRed = false; break;
-            case "仕": piece = 'A'; break;
-            case "士": piece = 'a'; isRed = false; break;
-            case "帅": piece = 'K'; break;
-            case "将": piece = 'k'; isRed = false; break;
-            default: throw new IllegalArgumentException("未知棋子: " + move.pieceStr);
+            case "兵":
+                piece = 'P';
+                break;
+            case "卒":
+                piece = 'p';
+                isRed = false;
+                break;
+            case "炮":
+                piece = isRed ? 'C' : 'c';
+                break;
+            case "车":
+                piece = isRed ? 'R' : 'r';
+                break;
+            case "马":
+                piece = isRed ? 'N' : 'n';
+                break;
+            case "相":
+                piece = 'B';
+                break;
+            case "象":
+                piece = 'b';
+                isRed = false;
+                break;
+            case "仕":
+                piece = 'A';
+                break;
+            case "士":
+                piece = 'a';
+                isRed = false;
+                break;
+            case "帅":
+                piece = 'K';
+                break;
+            case "将":
+                piece = 'k';
+                isRed = false;
+                break;
+            default:
+                throw new IllegalArgumentException("未知棋子: " + move.pieceStr);
         }
 
         // 找到棋子位置
@@ -67,10 +94,10 @@ public class ChessFen {
                 throw new IllegalStateException("马的目标列不合法: " + notation);
             }
 
-            if (move.action.equals("进")) {
+            if ("进".equals(move.action)) {
                 newRow += isRed ? -rowDelta : rowDelta;
                 newCol = targetCol;
-            } else if (move.action.equals("退")) {
+            } else if ("退".equals(move.action)) {
                 newRow += isRed ? rowDelta : -rowDelta;
                 newCol = targetCol;
             }
@@ -87,7 +114,6 @@ public class ChessFen {
             if (b[legRow][legCol] != '.') {
                 throw new IllegalStateException("蹩马腿: " + notation);
             }
-
         } else if (piece == 'B' || piece == 'b') {
             // 相/象斜走
             if ("进".equals(move.action)) {
@@ -114,7 +140,7 @@ public class ChessFen {
             if ("进".equals(move.action)) {
                 newRow += isRed ? -1 : 1;
                 newCol = fileToBoardCol(move.target, isRed);
-            } else if (move.action.equals("退")) {
+            } else if ("退".equals(move.action)) {
                 newRow += isRed ? 1 : -1;
                 newCol = fileToBoardCol(move.target, isRed);
             }
@@ -147,28 +173,28 @@ public class ChessFen {
 
         } else if (piece == 'P' || piece == 'p') {
             // 兵/卒走法
-            if (move.action.equals("进")) {
-                newRow += isRed ? -1 : 1;
-            } else if (move.action.equals("退")) {
-                throw new IllegalStateException("兵/卒不能退: " + notation);
-            } else if (move.action.equals("平")) {
-                if (isRed && startRow <= 4) {
-                    newCol = fileToBoardCol(move.target, isRed);
-                } else if (!isRed && startRow >= 5) {
-                    newCol = fileToBoardCol(move.target, isRed);
-                } else {
-                    throw new IllegalStateException("兵/卒未过河不能横走: " + notation);
+            switch (move.action) {
+                case "进" -> newRow += isRed ? -1 : 1;
+                case "退" -> throw new IllegalStateException("兵/卒不能退: " + notation);
+                case "平" -> {
+                    if (isRed && startRow <= 4) {
+                        newCol = fileToBoardCol(move.target, isRed);
+                    } else if (!isRed && startRow >= 5) {
+                        newCol = fileToBoardCol(move.target, isRed);
+                    } else {
+                        throw new IllegalStateException("兵/卒未过河不能横走: " + notation);
+                    }
                 }
+                default -> throw new IllegalStateException("Unexpected value: " + move.action);
             }
 
         } else {
             // 车等直线走子
-            if (move.action.equals("进")) {
-                newRow += isRed ? -move.target : move.target;
-            } else if (move.action.equals("退")) {
-                newRow += isRed ? move.target : -move.target;
-            } else if (move.action.equals("平")) {
-                newCol = fileToBoardCol(move.target, isRed);
+            switch (move.action) {
+                case "进" -> newRow += isRed ? -move.target : move.target;
+                case "退" -> newRow += isRed ? move.target : -move.target;
+                case "平" -> newCol = fileToBoardCol(move.target, isRed);
+                default -> throw new IllegalStateException("Unexpected value: " + move.action);
             }
 
             if (piece == 'R' || piece == 'r' || piece == 'K' || piece == 'k') {

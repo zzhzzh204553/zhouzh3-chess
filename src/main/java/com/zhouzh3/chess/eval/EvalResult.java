@@ -4,22 +4,22 @@ package com.zhouzh3.chess.eval;
 import lombok.Value;
 
 @Value
-public final class EvalResult {
+public class EvalResult {
 
     /** 红方总评估分，表示从红方自身角度累计得到的分值。 */
-    private final int redScore;
+    private int redScore;
 
     /** 黑方总评估分，表示从黑方自身角度累计得到的分值。 */
-    private final int blackScore;
+    private int blackScore;
 
     /** 红方视角最终分，等于 redScore - blackScore，正数表示红优，负数表示黑优。 */
-    private final int redPerspectiveScore;
+    private int redPerspectiveScore;
 
     /** 当前行棋方视角分，正数表示当前要走的一方更优。 */
-    private final int sideToMoveScore;
+    private int sideToMoveScore;
 
     /** 当前行棋方，'w' 表示红方走，'b' 表示黑方走。 */
-    private final char sideToMove;
+    private char sideToMove;
 
     public EvalResult(int redScore, int blackScore, char sideToMove) {
         this.redScore = redScore;

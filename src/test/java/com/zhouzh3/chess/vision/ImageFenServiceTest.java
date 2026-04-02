@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ImageFenService {
+public class ImageFenServiceTest {
     private static final int BOARD_X = 10;
     private static final int BOARD_Y = 676;
     private static final int BOARD_WIDTH = 1159;
@@ -55,7 +55,7 @@ public class ImageFenService {
 
     private final Path imageDir;
 
-    public ImageFenService(Path imageDir) {
+    public ImageFenServiceTest(Path imageDir) {
         this.imageDir = imageDir;
     }
 
@@ -305,7 +305,7 @@ public class ImageFenService {
     public static void main(String[] args) {
         Path imageDir = Path.of("src", "main", "resources", "static", "images");
         Path screenshot = imageDir.resolve("222.jpg");
-        String fen = new ImageFenService(imageDir).recognizeFen(screenshot);
+        String fen = new ImageFenServiceTest(imageDir).recognizeFen(screenshot);
         System.out.println(fen);
 
     }
