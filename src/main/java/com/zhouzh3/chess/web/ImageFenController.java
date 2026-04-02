@@ -1,0 +1,39 @@
+package com.zhouzh3.chess.web;
+
+import com.zhouzh3.chess.vision.ImageFenService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+
+
+@Slf4j
+@RestController
+@RequestMapping("/api/image-fen")
+public class ImageFenController {
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Map<String, String> parse(@RequestParam("file") MultipartFile file) throws Exception {
+        String suffix = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        Path screenshot = Files.createTempFile("image-fen-", suffix == null ? ".jpg" : "." + suffix);
+        try {
+            file.transferTo(screenshot);
+            ImageFenService imageFenService = new ImageFenService();
+            String fen = imageFenService.parseImageFen(screenshot, true);
+            return Map.of("fen", fen);
+        } catch (Exception e) {
+            log.error("解析图片失败", e);
+            throw e;
+        } finally {
+            Files.deleteIfExists(screenshot);
+        }
+    }
+}
