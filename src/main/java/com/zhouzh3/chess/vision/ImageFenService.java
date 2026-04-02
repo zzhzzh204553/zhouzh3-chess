@@ -5,18 +5,12 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ImageFenService {
-    private static final int SIZE = 121;
-    private static final int CENTER = SIZE / 2 - 8;
-    private static final int COMPARE_RADIUS = SIZE / 2 - 20;
-    private static final int BACKGROUND_R = 0xFF;
-    private static final int BACKGROUND_G = 0xCC;
-    private static final int BACKGROUND_B = 0x90;
-    private static final int EDGE_OFFSET = 10;
-    private static final double COLOR_TOLERANCE = 26.0;
 
     private final Map<String, String> pieceHashes = new LinkedHashMap<>();
 
@@ -38,7 +32,7 @@ public class ImageFenService {
         load("p黑卒", "images/black-zu.png");
     }
 
-    public String identifyPiece(BufferedImage cellImage, Map<String, Object> params) {
+    public String identifyPiece(BufferedImage cellImage, Cell cell, Path outputDir) {
         if (pieceHashes.isEmpty()) {
             try {
                 init();
@@ -46,26 +40,25 @@ public class ImageFenService {
                 throw new RuntimeException("加载棋子模板失败", e);
             }
         }
-        BufferedImage normalized = resize(cellImage, SIZE, SIZE);
+        BufferedImage normalized = resize(cellImage, Constants.SIZE, Constants.SIZE);
 //        boolean hasPiece = hasPieceByVerticalEdgePoints(normalized);
 //        if (!hasPiece) {
-//            System.out.println(params + "============================ hasPiece=false");
+//            System.out.println(cell + "============================ hasPiece=false");
 //            return "";
 //        }
 
-//        boolean redFirst = isRedPiece(normalized);
-        PieceSide redFirst = getPieceSide(normalized);
-        if (redFirst == PieceSide.EMPTY) {
+//        boolean pieceSide = isRedPiece(normalized);
+        PieceSide pieceSide = parsePieceSide(normalized);
+        if (pieceSide == PieceSide.EMPTY) {
             return "";
         }
         String hash = generateHash(normalized);
         String best = null;
         int bestDistance = Integer.MAX_VALUE;
 
-        System.out.println(params + "============================ hasPiece=true");
+        System.out.println(cell + "============================ hasPiece=true");
         for (Map.Entry<String, String> entry : pieceHashes.entrySet()) {
-//            if (redFirst != isRedName(entry.getKey())) {
-            if (redFirst != getPieceSide(entry.getKey())) {
+            if (pieceSide != getPieceSide(entry.getKey())) {
                 continue;
             }
             int distance = hammingDistance(hash, entry.getValue());
@@ -77,6 +70,10 @@ public class ImageFenService {
             }
         }
         System.out.println();
+
+        Path samplePath = outputDir.resolve(String.format("cell_%d_%d_%s.png", cell.getRow(), cell.getCol(), best));
+//        ImageIO.write(cellImage, "png", samplePath.toFile());
+        System.out.println("sample image: " + samplePath);
         return best;
     }
 
@@ -85,7 +82,7 @@ public class ImageFenService {
             if (inputStream == null) {
                 throw new IOException("模板不存在: " + resourcePath);
             }
-            pieceHashes.put(name, generateHash(resize(ImageIO.read(inputStream), SIZE, SIZE)));
+            pieceHashes.put(name, generateHash(resize(ImageIO.read(inputStream), Constants.SIZE, Constants.SIZE)));
         }
     }
 
@@ -101,10 +98,10 @@ public class ImageFenService {
 
     private String generateHash(BufferedImage img) {
         long sum = 0;
-        int[][] gray = new int[SIZE][SIZE];
+        int[][] gray = new int[Constants.SIZE][Constants.SIZE];
         int pixelCount = 0;
-        for (int y = 0; y < SIZE; y++) {
-            for (int x = 0; x < SIZE; x++) {
+        for (int y = 0; y < Constants.SIZE; y++) {
+            for (int x = 0; x < Constants.SIZE; x++) {
                 if (!isInsideCircle(x, y)) {
                     continue;
                 }
@@ -126,9 +123,9 @@ public class ImageFenService {
             throw new IllegalArgumentException("圆形区域内没有可比较的像素");
         }
         int avg = (int) (sum / pixelCount);
-        StringBuilder sb = new StringBuilder(SIZE * SIZE);
-        for (int y = 0; y < SIZE; y++) {
-            for (int x = 0; x < SIZE; x++) {
+        StringBuilder sb = new StringBuilder(Constants.SIZE * Constants.SIZE);
+        for (int y = 0; y < Constants.SIZE; y++) {
+            for (int x = 0; x < Constants.SIZE; x++) {
                 if (!isInsideCircle(x, y)) {
                     continue;
                 }
@@ -148,7 +145,7 @@ public class ImageFenService {
         return distance;
     }
 
-    private PieceSide getPieceSide(BufferedImage img) {
+    private PieceSide parsePieceSide(BufferedImage img) {
         long redScore = 0;
         long darkScore = 0;
         for (int y = 0; y < img.getHeight(); y++) {
@@ -189,24 +186,23 @@ public class ImageFenService {
     }
 
     private boolean isInsideCircle(int x, int y) {
-        int dx = x - CENTER;
-        int dy = y - CENTER;
-        return dx * dx + dy * dy <= COMPARE_RADIUS * COMPARE_RADIUS;
+        int dx = x - Constants.CENTER;
+        int dy = y - Constants.CENTER;
+        return dx * dx + dy * dy <= Constants.COMPARE_RADIUS * Constants.COMPARE_RADIUS;
     }
 
     private boolean hasPieceByVerticalEdgePoints(BufferedImage img) {
-        int topY = CENTER - COMPARE_RADIUS + EDGE_OFFSET;
-        int bottomY = CENTER + COMPARE_RADIUS - EDGE_OFFSET;
-        int leftX = CENTER - COMPARE_RADIUS + EDGE_OFFSET;
-        int rightX = CENTER + COMPARE_RADIUS - EDGE_OFFSET;
+        int topY = Constants.CENTER - Constants.COMPARE_RADIUS + Constants.EDGE_OFFSET;
+        int bottomY = Constants.CENTER + Constants.COMPARE_RADIUS - Constants.EDGE_OFFSET;
+//        int leftX = CENTER - COMPARE_RADIUS + EDGE_OFFSET;
+//        int rightX = CENTER + COMPARE_RADIUS - EDGE_OFFSET;
 
-        int colorTopY = img.getRGB(CENTER, topY);
-        int colorBottomY = img.getRGB(CENTER, bottomY);
-        int colorLeftX = img.getRGB(leftX, CENTER - EDGE_OFFSET);
-        int colorRightX = img.getRGB(rightX, CENTER - EDGE_OFFSET);
+        int colorTopY = img.getRGB(Constants.CENTER, topY);
+        int colorBottomY = img.getRGB(Constants.CENTER, bottomY);
+//        int colorLeftX = img.getRGB(leftX, CENTER - EDGE_OFFSET);
+//        int colorRightX = img.getRGB(rightX, CENTER - EDGE_OFFSET);
 
-        System.out.println("===============" + toRGB16(colorTopY) + ", " + toRGB16(colorBottomY) + ", " + toRGB16(colorLeftX) + ", " + toRGB16(colorRightX));
-        System.out.println("===============" + isBgColor(colorTopY) + ", " + isBgColor(colorBottomY) + ", " + isBgColor(colorLeftX) + ", " + isBgColor(colorRightX));
+        System.out.println("===============" + toRGB16(colorTopY) + ", " + toRGB16(colorBottomY)  );
 
 
         return isBgColor(colorTopY) && isBgColor(colorBottomY);
@@ -220,10 +216,74 @@ public class ImageFenService {
         int r = (argb >> 16) & 255;
         int g = (argb >> 8) & 255;
         int b = argb & 255;
-        int dr = r - BACKGROUND_R;
-        int dg = g - BACKGROUND_G;
-        int db = b - BACKGROUND_B;
-        return Math.sqrt(dr * dr + dg * dg + db * db) <= COLOR_TOLERANCE;
+        int dr = r - Constants.BACKGROUND_R;
+        int dg = g - Constants.BACKGROUND_G;
+        int db = b - Constants.BACKGROUND_B;
+        return Math.sqrt(dr * dr + dg * dg + db * db) <= Constants.COLOR_TOLERANCE;
     }
 
+    public void exportBoardSamples(Path screenshot, Path outputDir, ImageFenMain imageFenMain) throws IOException {
+        BufferedImage source = ImageIO.read(screenshot.toFile());
+        if (source == null) {
+            throw new IOException("无法读取图片: " + screenshot);
+        }
+
+        Files.createDirectories(outputDir);
+
+        double scaleX = Constants.BOARD_WIDTH / Constants.BOARD_BASE_WIDTH;
+        double scaleY = Constants.BOARD_HEIGHT / Constants.BOARD_BASE_HEIGHT;
+        int sampleSize = Math.max(40, (int) Math.round(Math.min(scaleX * Constants.STEP_X, scaleY * Constants.STEP_Y) * 1));
+
+        BufferedImage marked = new BufferedImage(
+                source.getWidth(),
+                source.getHeight(),
+                BufferedImage.TYPE_INT_RGB
+        );
+        Graphics2D graphics = marked.createGraphics();
+        graphics.drawImage(source, 0, 0, null);
+        graphics.setColor(Color.RED);
+        graphics.setStroke(new BasicStroke(1));
+
+        for (int row = Constants.START_ROW; row <= Constants.END_ROW; row++) {
+            for (int col = Constants.START_COL; col <= Constants.END_COL; col++) {
+                int centerX = Constants.BOARD_X
+                        + (int) Math.round((Constants.START_X + col * Constants.STEP_X) * scaleX)
+                        + Constants.OFFSET_X
+                        + col * Constants.EXTRA_GAP_X;
+                int centerY = Constants.BOARD_Y
+                        + (int) Math.round((Constants.START_Y + row * Constants.STEP_Y) * scaleY)
+                        + Constants.OFFSET_Y
+                        + row * Constants.EXTRA_GAP_Y;
+                int left = Math.max(0, centerX - sampleSize / 2);
+                int top = Math.max(0, centerY - sampleSize / 2);
+                int width = Math.min(sampleSize, source.getWidth() - left);
+                int height = Math.min(sampleSize, source.getHeight() - top);
+                if (col >= 4) {
+                    left = left - 2;
+                }
+
+                BufferedImage cellImage = source.getSubimage(left, top, width, height);
+                BufferedImage cropCircle = ImageUtil.cropCircle(cellImage);
+
+
+                Cell cell = new Cell(row, col);
+
+                String chessName = identifyPiece(cropCircle, cell, outputDir);
+                Path samplePath = outputDir.resolve(String.format("cell_%d_%d_%s.png", cell.getRow(), cell.getCol(), chessName));
+                ImageIO.write(cropCircle, "png", samplePath.toFile());
+                System.out.println("sample image: " + samplePath);
+
+                graphics.drawRect(left, top, width, height);
+                System.out.printf("cell[%d,%d] center=(%d,%d), rect=(x=%d,y=%d,w=%d,h=%d)%n, %s",
+                        row, col, centerX, centerY, left, top, width, height, chessName);
+                System.out.println();
+            }
+        }
+
+        graphics.dispose();
+
+        Path markedPath = outputDir.resolve("zz_board_marked.png");
+        ImageIO.write(marked, "png", markedPath.toFile());
+        System.out.println("marked image: " + markedPath);
+    }
 }
