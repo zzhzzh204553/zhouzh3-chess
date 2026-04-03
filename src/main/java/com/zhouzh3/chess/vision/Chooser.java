@@ -251,7 +251,7 @@ public class Chooser {
         double coverageGap = Math.abs(metrics.foregroundCoverage() - templateMetrics.foregroundCoverage());
         double activeCoverageGap = Math.abs(metrics.activeCoverage() - templateMetrics.activeCoverage());
         double colorGap = colorGap(metrics, templateMetrics);
-        double sidePenalty = pieceSide == PieceSide.EMPTY || pieceSide == template.side() ? 0d : 0.20d;
+        double sidePenalty = pieceSide == PieceSide.EMPTY || pieceSide == template.side() ? 0d : 0.35d;
         return structuralGap * 0.70d
                 + normalizedHash * 0.15d
                 + colorGap * 0.12d
@@ -331,7 +331,8 @@ public class Chooser {
 //        Board board = chooser.getBoard(chooser);
 //        System.out.println(board.toFen());
 
-        InputStream resourceAsStream = Objects.requireNonNull(Chooser.class.getClassLoader().getResourceAsStream("chess/cell_6_6.png"));
+        String name = "chess/cell_1_3.png";
+        InputStream resourceAsStream = Objects.requireNonNull(Chooser.class.getClassLoader().getResourceAsStream(name));
         BufferedImage bufferedImage = ImageIO.read(resourceAsStream);
         ChessCell cell = chooser.choose(bufferedImage, 6, 6);
         System.out.println(cell);
