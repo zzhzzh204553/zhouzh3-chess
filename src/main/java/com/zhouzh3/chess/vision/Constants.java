@@ -2,6 +2,8 @@ package com.zhouzh3.chess.vision;
 
 
 public final class Constants {
+    public static final String ADVISOR = "A";
+
     private Constants() {
     } // 防止实例化
 
@@ -23,10 +25,13 @@ public final class Constants {
     public static final double START_Y = 47.0;
     public static final double STEP_X = 60.0;
     public static final double STEP_Y = 60.0;
+
     public static final int OFFSET_X = -14;
     public static final int OFFSET_Y = -22;
+
     public static final int EXTRA_GAP_X = 4;
     public static final int EXTRA_GAP_Y = 4;
+
     public static final int START_ROW = 0;
     public static final int END_ROW = 9;
     public static final int START_COL = 0;

@@ -13,8 +13,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import static com.zhouzh3.chess.vision.Constants.END_COL;
 
 
 @Slf4j
@@ -87,7 +91,7 @@ public class ImageFenService {
 
         // 巡河和骑河，是不可能有红仕的
         if (row == 4 || row == 5) {
-            if (best != null && best.contains("A")) {
+            if (best != null && best.contains(Constants.ADVISOR)) {
                 best = "";
             }
         }
@@ -262,7 +266,7 @@ public class ImageFenService {
         Board board = new Board();
         List<List<Region>> regions = listBoardRegions(source);
         for (int row = Constants.START_ROW; row <= Constants.END_ROW; row++) {
-            for (int col = Constants.START_COL; col <= Constants.END_COL; col++) {
+            for (int col = Constants.START_COL; col <= END_COL; col++) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(MessageFormat.format("cell[{0}{1}]", row, col));
 
@@ -303,7 +307,7 @@ public class ImageFenService {
         List<List<Region>> regions = new ArrayList<>();
         for (int row = Constants.START_ROW; row <= Constants.END_ROW; row++) {
             List<Region> rowRegions = new ArrayList<>();
-            for (int col = Constants.START_COL; col <= Constants.END_COL; col++) {
+            for (int col = Constants.START_COL; col <= END_COL; col++) {
                 rowRegions.add(buildRegion(source, sampleSize, scaleX, scaleY, row, col));
             }
             regions.add(rowRegions);
@@ -311,7 +315,10 @@ public class ImageFenService {
         return regions;
     }
 
-    private Region buildRegion(BufferedImage source, int sampleSize, double scaleX, double scaleY, int row, int col) {
+    private Region buildRegion(BufferedImage source,
+                               int sampleSize,
+                               double scaleX, double scaleY,
+                               int row, int col) {
         int centerX = Constants.BOARD_X
                 + (int) Math.round((Constants.START_X + col * Constants.STEP_X) * scaleX)
                 + Constants.OFFSET_X
