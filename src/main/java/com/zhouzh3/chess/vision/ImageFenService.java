@@ -33,20 +33,20 @@ public class ImageFenService {
 
     private Map<String, String> loadPieceHashes() throws IOException {
         Map<String, String> hashes = new LinkedHashMap<>();
-        load(hashes, "R红车", "images/red-ju.png");
-        load(hashes, "N红马", "images/red-ma.png");
-        load(hashes, "B红相", "images/red-xiang.png");
-        load(hashes, "A红仕", "images/red-shi.png");
-        load(hashes, "K红帅", "images/red-shuai.png");
-        load(hashes, "C红炮", "images/red-pao.png");
-        load(hashes, "P红兵", "images/red-bing.png");
-        load(hashes, "r黑车", "images/black-ju.png");
-        load(hashes, "n黑马", "images/black-ma.png");
-        load(hashes, "b黑象", "images/black-xiang.png");
-        load(hashes, "a黑士", "images/black-shi.png");
-        load(hashes, "k黑将", "images/black-jiang.png");
-        load(hashes, "c黑炮", "images/black-pao.png");
-        load(hashes, "p黑卒", "images/black-zu.png");
+        load(hashes, "R红车", "images-old/red-ju.png");
+        load(hashes, "N红马", "images-old/red-ma.png");
+        load(hashes, "B红相", "images-old/red-xiang.png");
+        load(hashes, "A红仕", "images-old/red-shi.png");
+        load(hashes, "K红帅", "images-old/red-shuai.png");
+        load(hashes, "C红炮", "images-old/red-pao.png");
+        load(hashes, "P红兵", "images-old/red-bing.png");
+        load(hashes, "r黑车", "images-old/black-ju.png");
+        load(hashes, "n黑马", "images-old/black-ma.png");
+        load(hashes, "b黑象", "images-old/black-xiang.png");
+        load(hashes, "a黑士", "images-old/black-shi.png");
+        load(hashes, "k黑将", "images-old/black-jiang.png");
+        load(hashes, "c黑炮", "images-old/black-pao.png");
+        load(hashes, "p黑卒", "images-old/black-zu.png");
         return Map.copyOf(hashes);
     }
 
@@ -198,8 +198,7 @@ public class ImageFenService {
         int r = (argb >> 16) & 255;
         int g = (argb >> 8) & 255;
         int b = argb & 255;
-        Color color = new Color(r, g, b);
-        return color;
+        return new Color(r, g, b);
     }
 
     private static boolean isDarkColor(int r, int g, int b) {
