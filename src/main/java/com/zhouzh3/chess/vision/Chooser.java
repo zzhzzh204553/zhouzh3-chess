@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -21,6 +22,9 @@ import static com.zhouzh3.chess.vision.Constants.CANDIDATES;
  */
 @Slf4j
 public class Chooser {
+    private static final String TEMPLATE_PATH_SEPARATOR = "\\|";
+    private static final double RED_DOMINANCE_RATIO = 2.00d;
+    private static final long RED_DOMINANCE_DELTA = 80000L;
     private static final double EMPTY_FOREGROUND_COVERAGE_THRESHOLD = 0.10d;
     private static final double EMPTY_EDGE_DENSITY_THRESHOLD = 6.0d;
     private static final double EMPTY_CONTRAST_THRESHOLD = 18.0d;
@@ -41,7 +45,7 @@ public class Chooser {
         Map<String, TemplateFeature> templates = new LinkedHashMap<>();
         CANDIDATES.forEach((name, resourcePath) -> {
             try {
-                load(templates, name, resourcePath);
+                loadAll(templates, name, resourcePath);
             } catch (IOException e) {
                 log.error("加载模板失败: {}", resourcePath, e);
             }
@@ -61,6 +65,18 @@ public class Chooser {
 //        load(templates, "c黑炮", "images/black-pao.png");
 //        load(templates, "p黑卒", "images/black-zu.png");
         return Map.copyOf(templates);
+    }
+
+    private void loadAll(Map<String, TemplateFeature> templates, String name, String resourcePaths) throws IOException {
+        String[] paths = resourcePaths.split(TEMPLATE_PATH_SEPARATOR);
+        for (int i = 0; i < paths.length; i++) {
+            String path = paths[i].trim();
+            if (path.isEmpty()) {
+                continue;
+            }
+            String templateName = paths.length == 1 ? name : name + "#" + (i + 1);
+            load(templates, templateName, path);
+        }
     }
 
     private void load(Map<String, TemplateFeature> templates, String name, String resourcePath) throws IOException {
@@ -227,7 +243,12 @@ public class Chooser {
         }
 
 
-        return new ChessCell(row, col, best);
+        return new ChessCell(row, col, normalizeName(best));
+    }
+
+    private String normalizeName(String name) {
+        int idx = name.indexOf('#');
+        return idx >= 0 ? name.substring(0, idx) : name;
     }
 
     private int hammingDistance(String a, String b) {
@@ -312,7 +333,7 @@ public class Chooser {
             return PieceSide.EMPTY;
         }
         log.info("redScore={}, darkScore={}", redScore, darkScore);
-        if (redScore >= darkScore) {
+        if (redScore > darkScore * RED_DOMINANCE_RATIO && redScore - darkScore > RED_DOMINANCE_DELTA) {
             return PieceSide.RED;
         }
         return PieceSide.BLACK;
@@ -326,9 +347,30 @@ public class Chooser {
                                 long redScore, long darkScore) {
     }
 
+    @NonNull
+    private Board buildBoard(List<List<String>> inputImages) throws IOException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        Board board = new Board();
+        for (int row = 0; row <= Constants.END_ROW; row++) {
+            System.out.println("row " + row + ": ");
+            for (int col = 0; col <= Constants.END_COL; col++) {
+                String inputImage = inputImages.get(row).get(col);
+                try (InputStream inputStream = classLoader.getResourceAsStream(inputImage)) {
+                    BufferedImage bufferedImage = ImageIO.read(Objects.requireNonNull(inputStream));
+                    ChessCell cell = this.choose(bufferedImage, row, col);
+                    System.out.println("====" + cell);
+                    board.setPiece(row, col, cell.chessName().charAt(0));
+                }
+            }
+        }
+        return board;
+    }
+
     public static void main(String[] args) throws IOException {
+        List<List<String>> inputImages = Constants.INPUT_IMAGES;
+
         Chooser chooser = new Chooser();
-        Board board = chooser.getBoard(chooser);
+        Board board = chooser.buildBoard(inputImages);
         System.out.println(board.toFen());
 
 //        String name = "chess/cell_6_6.png";
@@ -336,23 +378,5 @@ public class Chooser {
 //        BufferedImage bufferedImage = ImageIO.read(resourceAsStream);
 //        ChessCell cell = chooser.choose(bufferedImage, 6, 6);
 //        System.out.println(cell);
-    }
-
-    @NonNull
-    private Board getBoard(Chooser chooser) throws IOException {
-        Board board = new Board();
-        for (int row = 0; row <= Constants.END_ROW; row++) {
-            System.out.println("row " + row + ": ");
-            for (int col = 0; col <= Constants.END_COL; col++) {
-                String inputImage = Constants.INPUT_IMAGES.get(row).get(col);
-                try (InputStream inputStream = Chooser.class.getClassLoader().getResourceAsStream(inputImage)) {
-                    BufferedImage bufferedImage = ImageIO.read(Objects.requireNonNull(inputStream));
-                    ChessCell cell = chooser.choose(bufferedImage, row, col);
-                    System.out.println("====" + cell);
-                    board.setPiece(row, col, cell.chessName().charAt(0));
-                }
-            }
-        }
-        return board;
     }
 }

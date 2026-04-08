@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class Constants {
+
     public static final String ADVISOR = "A";
+
     public static final List<List<String>> INPUT_IMAGES = Arrays.asList(
             Arrays.asList("chess/cell_0_0.png", "chess/cell_0_1.png", "chess/cell_0_2.png", "chess/cell_0_3.png", "chess/cell_0_4.png", "chess/cell_0_5.png", "chess/cell_0_6.png", "chess/cell_0_7.png", "chess/cell_0_8.png"),
             Arrays.asList("chess/cell_1_0.png", "chess/cell_1_1.png", "chess/cell_1_2.png", "chess/cell_1_3.png", "chess/cell_1_4.png", "chess/cell_1_5.png", "chess/cell_1_6.png", "chess/cell_1_7.png", "chess/cell_1_8.png"),
@@ -33,7 +35,7 @@ public final class Constants {
             Map.entry("a黑士", "images/black-shi.png"),
             Map.entry("k黑将", "images/black-jiang.png"),
             Map.entry("c黑炮", "images/black-pao.png"),
-            Map.entry("p黑卒", "images/black-zu.png")
+            Map.entry("p黑卒", "images/black-zu.png|images/black-zu2.png")
     );
     public static final int END_ROW = 9;
     public static final int END_COL = 8;
