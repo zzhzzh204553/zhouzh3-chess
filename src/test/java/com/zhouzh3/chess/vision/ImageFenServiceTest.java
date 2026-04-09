@@ -1,6 +1,5 @@
 package com.zhouzh3.chess.vision;
 
-import nu.pattern.OpenCV;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -50,7 +49,7 @@ public class ImageFenServiceTest {
     );
 
     static {
-        OpenCV.loadLocally();
+//        OpenCV.loadLocally();
     }
 
     private final Path imageDir;

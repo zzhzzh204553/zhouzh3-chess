@@ -3,3 +3,14 @@ spring:
         name: zhouzh3-chess
     profiles:
         active: dev
+
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 10MB
+
+
+server:
+  tomcat:
+      max-swallow-size: 10MB
+      max-http-form-post-size: 10MB

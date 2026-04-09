@@ -65,6 +65,14 @@ public class ImageFenService {
         return circleImage;
     }
 
+    public static ChessSide fromScore(long redScore, long darkScore) {
+//        darkScore == 303 || darkScore == 109 || darkScore == 202
+        if (darkScore == 0) {
+            return ChessSide.EMPTY;
+        }
+        return redScore >= darkScore ? ChessSide.RED : ChessSide.BLACK;
+    }
+
     private Map<String, String> loadPieceHashes() throws IOException {
         Map<String, String> hashes = new LinkedHashMap<>();
         load(hashes, "R红车", "images-old/red-ju.png");
@@ -89,9 +97,9 @@ public class ImageFenService {
             throw new IllegalStateException("棋子模板尚未初始化");
         }
         BufferedImage normalized = resize(cellImage, Constants.SIZE, Constants.SIZE);
-        PieceSide pieceSide = parsePieceSide(normalized);
-        log.info("pieceSide={}", pieceSide);
-//        if (pieceSide == PieceSide.EMPTY) {
+        ChessSide chessSide = parsePieceSide(normalized);
+        log.info("chessSide={}", chessSide);
+//        if (chessSide == ChessSide.EMPTY) {
 //            return new ChessCell(row, col, "");
 //        }
 
@@ -101,8 +109,8 @@ public class ImageFenService {
 
         for (Map.Entry<String, String> entry : pieceHashes.entrySet()) {
             if (
-                /*pieceSide != PieceSide.EMPTY &&*/
-                    pieceSide != getPieceSide(entry.getKey())) {
+                /*chessSide != ChessSide.EMPTY &&*/
+                    chessSide != getPieceSide(entry.getKey())) {
                 continue;
             }
             int distance = hammingDistance(hash, entry.getValue());
@@ -112,7 +120,7 @@ public class ImageFenService {
             }
         }
 
-        if (pieceSide == PieceSide.EMPTY) {
+        if (chessSide == ChessSide.EMPTY) {
 //            if (best != null) {
 //                String upperCase = best.substring(0, 1).toUpperCase();
 //                if (Arrays.asList("B", "A", "K", "P").contains(upperCase)) {
@@ -199,7 +207,7 @@ public class ImageFenService {
         return distance;
     }
 
-    private PieceSide parsePieceSide(BufferedImage img) {
+    private ChessSide parsePieceSide(BufferedImage img) {
         long redScore = 0;
         long darkScore = 0;
         for (int y = 0; y < img.getHeight(); y++) {
@@ -219,7 +227,7 @@ public class ImageFenService {
             }
         }
         log.info("redScore={}, darkScore={}", redScore, darkScore);
-        return PieceSide.fromScore(redScore, darkScore);
+        return fromScore(redScore, darkScore);
     }
 
     @Nullable
@@ -243,14 +251,14 @@ public class ImageFenService {
         return r > 120 && r > g + 12 && r > b + 12;
     }
 
-    private PieceSide getPieceSide(String name) {
+    private ChessSide getPieceSide(String name) {
         if (name.isEmpty() || !Character.isAlphabetic(name.charAt(0))) {
-            return PieceSide.EMPTY;
+            return ChessSide.EMPTY;
         }
         if (Character.isUpperCase(name.charAt(0))) {
-            return PieceSide.RED;
+            return ChessSide.RED;
         } else {
-            return PieceSide.BLACK;
+            return ChessSide.BLACK;
         }
     }
 

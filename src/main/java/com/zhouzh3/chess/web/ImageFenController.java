@@ -1,7 +1,11 @@
 package com.zhouzh3.chess.web;
 
-import com.zhouzh3.chess.vision.ImageFenService;
+import com.zhouzh3.chess.fen.Board;
+import com.zhouzh3.chess.util.ImageUtil;
+import com.zhouzh3.chess.vision.ChessDetector;
+import com.zhouzh3.chess.vision.CropParam;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,15 +24,21 @@ import java.util.Map;
 @RequestMapping("/api/image-fen")
 public class ImageFenController {
 
+    @Autowired
+    private ChessDetector chessDetector;
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, String> parse(@RequestParam("file") MultipartFile file) throws Exception {
         String suffix = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        Path screenshot = Files.createTempFile("image-fen-", suffix == null ? ".jpg" : "." + suffix);
+        Path screenshot = Files.createTempFile("image-fen-", suffix == null ? ".png" : "." + suffix);
         try {
             file.transferTo(screenshot);
-            ImageFenService imageFenService = new ImageFenService();
-            String fen = imageFenService.parseImageFen(screenshot, true);
-            return Map.of("fen", fen);
+
+            CropParam cropParam = ImageUtil.cropChessPieces();
+            Board board = chessDetector.ocrBoard(screenshot.toFile(), cropParam);
+//            ImageFenService imageFenService = new ImageFenService();
+//            String fen = imageFenService.parseImageFen(screenshot, true);
+            return Map.of("fen", board.toFen());
         } catch (Exception e) {
             log.error("解析图片失败", e);
             throw e;

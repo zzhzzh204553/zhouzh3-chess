@@ -1,15 +1,28 @@
 package com.zhouzh3.chess.vision;
 
+import cn.hutool.core.io.FileUtil;
 import com.zhouzh3.chess.fen.Board;
+import com.zhouzh3.chess.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import static com.zhouzh3.chess.util.ImageUtil.cropCircle;
+import static com.zhouzh3.chess.util.ImageUtil.getSubimage;
 
 
 /**
@@ -17,7 +30,8 @@ import java.util.*;
  * @author haig
  */
 @Slf4j
-public class Chooser {
+@Service
+public class ChessDetector {
     private static final String TEMPLATE_PATH_SEPARATOR = "\\|";
     private static final double RED_DOMINANCE_RATIO = 2.00d;
     private static final long RED_DOMINANCE_DELTA = 80000L;
@@ -52,25 +66,12 @@ public class Chooser {
             Map.entry("p黑卒", "images/black-zu.png|images/black-zu2.png")
     );
 
-    public static final List<List<String>> INPUT_IMAGES = Arrays.asList(
-            Arrays.asList("chess/cell_0_0.png", "chess/cell_0_1.png", "chess/cell_0_2.png", "chess/cell_0_3.png", "chess/cell_0_4.png", "chess/cell_0_5.png", "chess/cell_0_6.png", "chess/cell_0_7.png", "chess/cell_0_8.png"),
-            Arrays.asList("chess/cell_1_0.png", "chess/cell_1_1.png", "chess/cell_1_2.png", "chess/cell_1_3.png", "chess/cell_1_4.png", "chess/cell_1_5.png", "chess/cell_1_6.png", "chess/cell_1_7.png", "chess/cell_1_8.png"),
-            Arrays.asList("chess/cell_2_0.png", "chess/cell_2_1.png", "chess/cell_2_2.png", "chess/cell_2_3.png", "chess/cell_2_4.png", "chess/cell_2_5.png", "chess/cell_2_6.png", "chess/cell_2_7.png", "chess/cell_2_8.png"),
-            Arrays.asList("chess/cell_3_0.png", "chess/cell_3_1.png", "chess/cell_3_2.png", "chess/cell_3_3.png", "chess/cell_3_4.png", "chess/cell_3_5.png", "chess/cell_3_6.png", "chess/cell_3_7.png", "chess/cell_3_8.png"),
-            Arrays.asList("chess/cell_4_0.png", "chess/cell_4_1.png", "chess/cell_4_2.png", "chess/cell_4_3.png", "chess/cell_4_4.png", "chess/cell_4_5.png", "chess/cell_4_6.png", "chess/cell_4_7.png", "chess/cell_4_8.png"),
-            Arrays.asList("chess/cell_5_0.png", "chess/cell_5_1.png", "chess/cell_5_2.png", "chess/cell_5_3.png", "chess/cell_5_4.png", "chess/cell_5_5.png", "chess/cell_5_6.png", "chess/cell_5_7.png", "chess/cell_5_8.png"),
-            Arrays.asList("chess/cell_6_0.png", "chess/cell_6_1.png", "chess/cell_6_2.png", "chess/cell_6_3.png", "chess/cell_6_4.png", "chess/cell_6_5.png", "chess/cell_6_6.png", "chess/cell_6_7.png", "chess/cell_6_8.png"),
-            Arrays.asList("chess/cell_7_0.png", "chess/cell_7_1.png", "chess/cell_7_2.png", "chess/cell_7_3.png", "chess/cell_7_4.png", "chess/cell_7_5.png", "chess/cell_7_6.png", "chess/cell_7_7.png", "chess/cell_7_8.png"),
-            Arrays.asList("chess/cell_8_0.png", "chess/cell_8_1.png", "chess/cell_8_2.png", "chess/cell_8_3.png", "chess/cell_8_4.png", "chess/cell_8_5.png", "chess/cell_8_6.png", "chess/cell_8_7.png", "chess/cell_8_8.png"),
-            Arrays.asList("chess/cell_9_0.png", "chess/cell_9_1.png", "chess/cell_9_2.png", "chess/cell_9_3.png", "chess/cell_9_4.png", "chess/cell_9_5.png", "chess/cell_9_6.png", "chess/cell_9_7.png", "chess/cell_9_8.png")
-    );
-
 
     private final Map<String, TemplateFeature> pieceTemplates;
     private final boolean[][] circleMask;
 
 
-    public Chooser() throws IOException {
+    public ChessDetector() throws IOException {
         this.circleMask = createCircleMask();
         this.pieceTemplates = loadPieceTemplates();
     }
@@ -229,14 +230,14 @@ public class Chooser {
     }
 
 
-    private PieceSide getPieceSide(String name) {
+    private ChessSide getPieceSide(String name) {
         if (name.isEmpty() || !Character.isAlphabetic(name.charAt(0))) {
-            return PieceSide.EMPTY;
+            return ChessSide.EMPTY;
         }
         if (Character.isUpperCase(name.charAt(0))) {
-            return PieceSide.RED;
+            return ChessSide.RED;
         } else {
-            return PieceSide.BLACK;
+            return ChessSide.BLACK;
         }
     }
 
@@ -245,10 +246,10 @@ public class Chooser {
             throw new IllegalStateException("棋子模板尚未初始化");
         }
         ImageMetrics metrics = extractMetrics(cellImage);
-        PieceSide pieceSide = parsePieceSide(cellImage, metrics);
-        log.info("pieceSide={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}",
-                pieceSide, metrics.mean(), metrics.contrast(), metrics.edgeDensity(), metrics.foregroundCoverage());
-        if (pieceSide == PieceSide.EMPTY) {
+        ChessSide chessSide = parsePieceSide(cellImage, metrics);
+        log.info("chessSide={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}",
+                chessSide, metrics.mean(), metrics.contrast(), metrics.edgeDensity(), metrics.foregroundCoverage());
+        if (chessSide == ChessSide.EMPTY) {
             return new ChessCell(row, col, ".");
         }
 
@@ -257,7 +258,7 @@ public class Chooser {
 
         for (Map.Entry<String, TemplateFeature> entry : pieceTemplates.entrySet()) {
             TemplateFeature template = entry.getValue();
-            double score = score(metrics, template, pieceSide);
+            double score = score(metrics, template, chessSide);
             if (score < bestScore) {
                 bestScore = score;
                 best = entry.getKey();
@@ -295,7 +296,7 @@ public class Chooser {
     }
 
 
-    private double score(ImageMetrics metrics, TemplateFeature template, PieceSide pieceSide) {
+    private double score(ImageMetrics metrics, TemplateFeature template, ChessSide chessSide) {
         ImageMetrics templateMetrics = template.metrics();
         int hashDistance = hammingDistance(metrics.hash(), templateMetrics.hash());
         double normalizedHash = (double) hashDistance / metrics.hash().length();
@@ -305,7 +306,7 @@ public class Chooser {
         double coverageGap = Math.abs(metrics.foregroundCoverage() - templateMetrics.foregroundCoverage());
         double activeCoverageGap = Math.abs(metrics.activeCoverage() - templateMetrics.activeCoverage());
         double colorGap = colorGap(metrics, templateMetrics);
-        double sidePenalty = pieceSide == PieceSide.EMPTY || pieceSide == template.side() ? 0d : 0.20d;
+        double sidePenalty = chessSide == ChessSide.EMPTY || chessSide == template.side() ? 0d : 0.20d;
         return structuralGap * 0.70d
                 + normalizedHash * 0.15d
                 + colorGap * 0.12d
@@ -349,7 +350,7 @@ public class Chooser {
         return color.isRedColor() || color.isDarkColor();
     }
 
-    private PieceSide parsePieceSide(BufferedImage img, ImageMetrics metrics) {
+    private ChessSide parsePieceSide(BufferedImage img, ImageMetrics metrics) {
         long redScore = metrics.redScore();
         long darkScore = metrics.darkScore();
         long colorScore = Math.max(redScore, darkScore);
@@ -363,16 +364,16 @@ public class Chooser {
             log.info("empty cell detected: redScore={}, darkScore={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}, activeCoverage={}",
                     redScore, darkScore, metrics.mean(), metrics.contrast(), metrics.edgeDensity(),
                     metrics.foregroundCoverage(), metrics.activeCoverage());
-            return PieceSide.EMPTY;
+            return ChessSide.EMPTY;
         }
         log.info("redScore={}, darkScore={}", redScore, darkScore);
         if (redScore > darkScore * RED_DOMINANCE_RATIO && redScore - darkScore > RED_DOMINANCE_DELTA) {
-            return PieceSide.RED;
+            return ChessSide.RED;
         }
-        return PieceSide.BLACK;
+        return ChessSide.BLACK;
     }
 
-    private record TemplateFeature(PieceSide side, ImageMetrics metrics) {
+    private record TemplateFeature(ChessSide side, ImageMetrics metrics) {
     }
 
     private record ImageMetrics(String hash, double mean, double contrast, double edgeDensity,
@@ -380,13 +381,13 @@ public class Chooser {
                                 long redScore, long darkScore) {
     }
 
-    @NonNull
-    private Board buildBoard(List<List<String>> inputImages) throws IOException {
+    @Deprecated
+    protected Board ocrBoard(List<List<String>> inputImages) throws IOException {
         ClassLoader classLoader = getClass().getClassLoader();
         Board board = new Board();
-        for (int row = 0; row <= END_ROW; row++) {
+        for (int row = 0; row <= ChessDetector.END_ROW; row++) {
             System.out.println("row " + row + ": ");
-            for (int col = 0; col <= END_COL; col++) {
+            for (int col = 0; col <= ChessDetector.END_COL; col++) {
                 String inputImage = inputImages.get(row).get(col);
                 try (InputStream inputStream = classLoader.getResourceAsStream(inputImage)) {
                     BufferedImage bufferedImage = ImageIO.read(Objects.requireNonNull(inputStream));
@@ -399,16 +400,41 @@ public class Chooser {
         return board;
     }
 
-    public static void main(String[] args) throws IOException {
 
-        Chooser chooser = new Chooser();
-        Board board = chooser.buildBoard(INPUT_IMAGES);
-        System.out.println(board.toFen());
+    public Board ocrBoard(File inputFile, CropParam cropParam) throws IOException {
+        BufferedImage originalImage = ImageIO.read(inputFile);
+        // 定义矩形区域 (x, y, width, height)
+        // 截取矩形区域
+        BufferedImage boardImage = getSubimage(originalImage, cropParam.chessBoardRegion());
 
-//        String name = "chess/cell_6_6.png";
-//        InputStream resourceAsStream = Objects.requireNonNull(Chooser.class.getClassLoader().getResourceAsStream(name));
-//        BufferedImage bufferedImage = ImageIO.read(resourceAsStream);
-//        ChessCell cell = chooser.choose(bufferedImage, 6, 6);
-//        System.out.println(cell);
+        Graphics2D graphics = boardImage.createGraphics();
+        graphics.setColor(java.awt.Color.RED);
+        graphics.setStroke(new BasicStroke(1));
+
+        // 保存截取后的图片
+        Path path = Paths.get(System.getProperty("java.io.tmpdir"), "chess", FileUtil.getPrefix(inputFile.getName()));
+        Files.createDirectories(path);
+
+        Board board = new Board();
+        for (int row = 0; row <= END_ROW; row++) {
+            for (int col = 0; col <= END_COL; col++) {
+                Region region = cropParam.getChessPieceRegion(row, col);
+                BufferedImage cellImage = getSubimage(boardImage, region);
+                BufferedImage cropCircle = cropCircle(cellImage);
+                ChessCell cell = this.choose(cropCircle, row, col);
+                board.setPiece(row, col, cell.chessName().charAt(0));
+
+                ImageUtil.write(cropCircle, path.resolve("cell_" + row + "_" + col + ".png"));
+                graphics.drawRect(region.x(), region.y(), region.width(), region.height());
+
+            }
+        }
+
+        ImageUtil.write(boardImage, path.resolve("zz_board_" + inputFile.getName()));
+        log.info("图片截取完成，保存为{}", path.toAbsolutePath().toString());
+
+        return board;
     }
+
+
 }

@@ -122,7 +122,7 @@ public class ImageMatcher {
 
         ImageMatcher imageMatcher = new ImageMatcher();
 
-        List<Tuple> validAdvisors = Arrays.asList(Tuple.of(0, 3), Tuple.of(0, 5), Tuple.of(2, 3), Tuple.of(2, 5));
+        List<Point> validAdvisors = Arrays.asList(Point.of(0, 3), Point.of(0, 5), Point.of(2, 3), Point.of(2, 5));
 
         Board board = new Board();
         for (int row = 0; row <= END_ROW; row++) {
@@ -138,9 +138,9 @@ public class ImageMatcher {
                 char name = results.get(0).name.charAt(0);
 //                String color = name.contains("红") ? "\u001B[31m" + name.substring(name.length() - 1) + "\u001B[0m" : "\u001B[37m" + name.substring(name.length() - 1) + "\u001B[0m";
 //                System.out.print(color + "\t");
-                if ('a' == (name) && !validAdvisors.contains(Tuple.of(row, col))) {
+                if ('a' == (name) && !validAdvisors.contains(Point.of(row, col))) {
                     name = '.';
-                } else if ('A' == name && !validAdvisors.contains(Tuple.of(END_ROW - row, col))) {
+                } else if ('A' == name && !validAdvisors.contains(Point.of(END_ROW - row, col))) {
                     name = '.';
                 }
 
