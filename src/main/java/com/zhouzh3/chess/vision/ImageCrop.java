@@ -88,8 +88,8 @@ public class ImageCrop {
         graphics.setStroke(new BasicStroke(1));
 
         // 保存截取后的图片
-        Path path = Paths.get(System.getProperty("java.io.tmpdir"), "chess");
-        Files.createDirectories(path.getParent());
+        Path path = Paths.get(System.getProperty("java.io.tmpdir"), "chess", FileUtil.getPrefix(inputFile.getName()));
+        Files.createDirectories(path);
 
         for (int row = 0; row <= END_ROW; row++) {
             for (int col = 0; col <= END_COL; col++) {
@@ -106,7 +106,7 @@ public class ImageCrop {
                 graphics.drawRect(x, y, CHESS_WIDTH, CHESS_HEIGH);
             }
         }
-        write(boardImage, path.resolve("zz_board.png"));
+        write(boardImage, path.resolve("zz_board" + inputFile.getName()));
         System.out.println("图片截取完成，保存为" + path.toAbsolutePath().toString());
     }
 
