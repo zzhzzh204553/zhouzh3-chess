@@ -9,12 +9,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-import static com.zhouzh3.chess.vision.Constants.CANDIDATES;
 
 /**
  * 最好的版本
@@ -31,6 +27,44 @@ public class Chooser {
     private static final double EMPTY_ACTIVE_COVERAGE_THRESHOLD = 0.18d;
     private static final long EMPTY_COLOR_SCORE_THRESHOLD = 900L;
     private static final double UNKNOWN_PIECE_SCORE_THRESHOLD = 0.72d;
+
+    public static final String ADVISOR = "A";
+    public static final int END_ROW = 9;
+    public static final int END_COL = 8;
+    public static final int IMAGE_SIZE = 114;
+    public static final int IMAGE_RADIUS = IMAGE_SIZE / 2;
+    public static final int IMAGE_CENTER = IMAGE_SIZE / 2;
+
+    public static final Map<String, String> CANDIDATES = Map.ofEntries(
+            Map.entry("R红车", "images/red-ju.png"),
+            Map.entry("N红马", "images/red-ma.png"),
+            Map.entry("B红相", "images/red-xiang.png"),
+            Map.entry("A红仕", "images/red-shi.png"),
+            Map.entry("K红帅", "images/red-shuai.png"),
+            Map.entry("C红炮", "images/red-pao.png"),
+            Map.entry("P红兵", "images/red-bing.png"),
+            Map.entry("r黑车", "images/black-ju.png"),
+            Map.entry("n黑马", "images/black-ma.png"),
+            Map.entry("b黑象", "images/black-xiang.png"),
+            Map.entry("a黑士", "images/black-shi.png"),
+            Map.entry("k黑将", "images/black-jiang.png"),
+            Map.entry("c黑炮", "images/black-pao.png"),
+            Map.entry("p黑卒", "images/black-zu.png|images/black-zu2.png")
+    );
+
+    public static final List<List<String>> INPUT_IMAGES = Arrays.asList(
+            Arrays.asList("chess/cell_0_0.png", "chess/cell_0_1.png", "chess/cell_0_2.png", "chess/cell_0_3.png", "chess/cell_0_4.png", "chess/cell_0_5.png", "chess/cell_0_6.png", "chess/cell_0_7.png", "chess/cell_0_8.png"),
+            Arrays.asList("chess/cell_1_0.png", "chess/cell_1_1.png", "chess/cell_1_2.png", "chess/cell_1_3.png", "chess/cell_1_4.png", "chess/cell_1_5.png", "chess/cell_1_6.png", "chess/cell_1_7.png", "chess/cell_1_8.png"),
+            Arrays.asList("chess/cell_2_0.png", "chess/cell_2_1.png", "chess/cell_2_2.png", "chess/cell_2_3.png", "chess/cell_2_4.png", "chess/cell_2_5.png", "chess/cell_2_6.png", "chess/cell_2_7.png", "chess/cell_2_8.png"),
+            Arrays.asList("chess/cell_3_0.png", "chess/cell_3_1.png", "chess/cell_3_2.png", "chess/cell_3_3.png", "chess/cell_3_4.png", "chess/cell_3_5.png", "chess/cell_3_6.png", "chess/cell_3_7.png", "chess/cell_3_8.png"),
+            Arrays.asList("chess/cell_4_0.png", "chess/cell_4_1.png", "chess/cell_4_2.png", "chess/cell_4_3.png", "chess/cell_4_4.png", "chess/cell_4_5.png", "chess/cell_4_6.png", "chess/cell_4_7.png", "chess/cell_4_8.png"),
+            Arrays.asList("chess/cell_5_0.png", "chess/cell_5_1.png", "chess/cell_5_2.png", "chess/cell_5_3.png", "chess/cell_5_4.png", "chess/cell_5_5.png", "chess/cell_5_6.png", "chess/cell_5_7.png", "chess/cell_5_8.png"),
+            Arrays.asList("chess/cell_6_0.png", "chess/cell_6_1.png", "chess/cell_6_2.png", "chess/cell_6_3.png", "chess/cell_6_4.png", "chess/cell_6_5.png", "chess/cell_6_6.png", "chess/cell_6_7.png", "chess/cell_6_8.png"),
+            Arrays.asList("chess/cell_7_0.png", "chess/cell_7_1.png", "chess/cell_7_2.png", "chess/cell_7_3.png", "chess/cell_7_4.png", "chess/cell_7_5.png", "chess/cell_7_6.png", "chess/cell_7_7.png", "chess/cell_7_8.png"),
+            Arrays.asList("chess/cell_8_0.png", "chess/cell_8_1.png", "chess/cell_8_2.png", "chess/cell_8_3.png", "chess/cell_8_4.png", "chess/cell_8_5.png", "chess/cell_8_6.png", "chess/cell_8_7.png", "chess/cell_8_8.png"),
+            Arrays.asList("chess/cell_9_0.png", "chess/cell_9_1.png", "chess/cell_9_2.png", "chess/cell_9_3.png", "chess/cell_9_4.png", "chess/cell_9_5.png", "chess/cell_9_6.png", "chess/cell_9_7.png", "chess/cell_9_8.png")
+    );
+
 
     private final Map<String, TemplateFeature> pieceTemplates;
     private final boolean[][] circleMask;
@@ -90,21 +124,21 @@ public class Chooser {
     }
 
     private boolean[][] createCircleMask() {
-        boolean[][] mask = new boolean[Constants.IMAGE_SIZE][Constants.IMAGE_SIZE];
-        for (int y = 0; y < Constants.IMAGE_SIZE; y++) {
-            for (int x = 0; x < Constants.IMAGE_SIZE; x++) {
-                int dx = x - Constants.IMAGE_CENTER;
-                int dy = y - Constants.IMAGE_CENTER;
-                mask[y][x] = dx * dx + dy * dy <= Constants.IMAGE_RADIUS * Constants.IMAGE_RADIUS;
+        boolean[][] mask = new boolean[IMAGE_SIZE][IMAGE_SIZE];
+        for (int y = 0; y < IMAGE_SIZE; y++) {
+            for (int x = 0; x < IMAGE_SIZE; x++) {
+                int dx = x - IMAGE_CENTER;
+                int dy = y - IMAGE_CENTER;
+                mask[y][x] = dx * dx + dy * dy <= IMAGE_RADIUS * IMAGE_RADIUS;
             }
         }
         return mask;
     }
 
     public static void printMask(boolean[][] mask) {
-        for (int y = 0; y < mask.length; y++) {
-            for (int x = 0; x < mask[y].length; x++) {
-                System.out.print(mask[y][x] ? "● " : "○ ");
+        for (boolean[] row : mask) {
+            for (boolean col : row) {
+                System.out.print(col ? "● " : "○ ");
             }
             System.out.println();
         }
@@ -120,11 +154,11 @@ public class Chooser {
         long squareSum = 0;
         long redScore = 0;
         long darkScore = 0;
-        int[][] gray = new int[Constants.IMAGE_SIZE][Constants.IMAGE_SIZE];
+        int[][] gray = new int[IMAGE_SIZE][IMAGE_SIZE];
         int pixelCount = 0;
         int foregroundCount = 0;
-        for (int y = 0; y < Constants.IMAGE_SIZE; y++) {
-            for (int x = 0; x < Constants.IMAGE_SIZE; x++) {
+        for (int y = 0; y < IMAGE_SIZE; y++) {
+            for (int x = 0; x < IMAGE_SIZE; x++) {
                 if (!circleMask[y][x]) {
                     continue;
                 }
@@ -155,12 +189,12 @@ public class Chooser {
         double variance = Math.max(0d, ((double) squareSum / pixelCount) - avg * avg);
         double contrast = Math.sqrt(variance);
         double activeDeltaThreshold = Math.max(12d, contrast * 0.65d);
-        StringBuilder sb = new StringBuilder(Constants.IMAGE_SIZE * Constants.IMAGE_SIZE);
+        StringBuilder sb = new StringBuilder(IMAGE_SIZE * IMAGE_SIZE);
         double edgeSum = 0d;
         int edgeCount = 0;
         int activeCount = 0;
-        for (int y = 0; y < Constants.IMAGE_SIZE; y++) {
-            for (int x = 0; x < Constants.IMAGE_SIZE; x++) {
+        for (int y = 0; y < IMAGE_SIZE; y++) {
+            for (int x = 0; x < IMAGE_SIZE; x++) {
                 if (!circleMask[y][x]) {
                     continue;
                 }
@@ -210,9 +244,8 @@ public class Chooser {
         if (pieceTemplates.isEmpty()) {
             throw new IllegalStateException("棋子模板尚未初始化");
         }
-        BufferedImage normalized = cellImage;
-        ImageMetrics metrics = extractMetrics(normalized);
-        PieceSide pieceSide = parsePieceSide(normalized, metrics);
+        ImageMetrics metrics = extractMetrics(cellImage);
+        PieceSide pieceSide = parsePieceSide(cellImage, metrics);
         log.info("pieceSide={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}",
                 pieceSide, metrics.mean(), metrics.contrast(), metrics.edgeDensity(), metrics.foregroundCoverage());
         if (pieceSide == PieceSide.EMPTY) {
@@ -237,7 +270,7 @@ public class Chooser {
 
         // 巡河和骑河，是不可能有红仕的
         if (row == 4 || row == 5) {
-            if (best != null && best.contains(Constants.ADVISOR)) {
+            if (best != null && best.contains(ADVISOR)) {
                 best = "";
             }
         }
@@ -288,8 +321,8 @@ public class Chooser {
         double templateContrast = Math.max(templateMetrics.contrast(), 1d);
         double totalGap = 0d;
         int count = 0;
-        for (int y = 0; y < Constants.IMAGE_SIZE; y++) {
-            for (int x = 0; x < Constants.IMAGE_SIZE; x++) {
+        for (int y = 0; y < IMAGE_SIZE; y++) {
+            for (int x = 0; x < IMAGE_SIZE; x++) {
                 if (!circleMask[y][x]) {
                     continue;
                 }
@@ -351,9 +384,9 @@ public class Chooser {
     private Board buildBoard(List<List<String>> inputImages) throws IOException {
         ClassLoader classLoader = getClass().getClassLoader();
         Board board = new Board();
-        for (int row = 0; row <= Constants.END_ROW; row++) {
+        for (int row = 0; row <= END_ROW; row++) {
             System.out.println("row " + row + ": ");
-            for (int col = 0; col <= Constants.END_COL; col++) {
+            for (int col = 0; col <= END_COL; col++) {
                 String inputImage = inputImages.get(row).get(col);
                 try (InputStream inputStream = classLoader.getResourceAsStream(inputImage)) {
                     BufferedImage bufferedImage = ImageIO.read(Objects.requireNonNull(inputStream));
@@ -367,10 +400,9 @@ public class Chooser {
     }
 
     public static void main(String[] args) throws IOException {
-        List<List<String>> inputImages = Constants.INPUT_IMAGES;
 
         Chooser chooser = new Chooser();
-        Board board = chooser.buildBoard(inputImages);
+        Board board = chooser.buildBoard(INPUT_IMAGES);
         System.out.println(board.toFen());
 
 //        String name = "chess/cell_6_6.png";

@@ -1,9 +1,7 @@
 package com.zhouzh3.chess.vision;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Objects;
 
 public class SSIM {
     public static double computeSSIM(BufferedImage img1, BufferedImage img2) throws IOException {
