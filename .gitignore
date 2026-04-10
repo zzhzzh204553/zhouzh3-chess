@@ -25,3 +25,5 @@ replay_pid*
 /.mvn/
 /.idea/
 /target/
+/src/main/resources/chess/
+/src/main/resources/images-old/

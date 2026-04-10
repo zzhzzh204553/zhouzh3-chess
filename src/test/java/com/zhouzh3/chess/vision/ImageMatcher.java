@@ -1,6 +1,7 @@
 package com.zhouzh3.chess.vision;
 
 import com.zhouzh3.chess.fen.Board;
+import com.zhouzh3.chess.model.Point;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

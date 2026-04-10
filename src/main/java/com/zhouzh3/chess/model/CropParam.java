@@ -1,4 +1,4 @@
-package com.zhouzh3.chess.vision;
+package com.zhouzh3.chess.model;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public record CropParam(Region chessBoardRegion, List<List<Region>> chessPieceGr
     /**
      * 获取指定行列的棋子区域
      */
-    public Region getChessPieceRegion(int row, int col) {
+    public Region getChessPiece(int row, int col) {
         if (row < 0 || row >= chessPieceGrid.size()) {
             throw new IndexOutOfBoundsException("行索引超出范围: " + row);
         }

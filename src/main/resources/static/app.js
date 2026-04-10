@@ -865,7 +865,7 @@ async function applyImagePosition() {
     formData.append("file", file);
 
     try {
-        const response = await fetch("/api/image-fen", {
+        const response = await fetch("/api/chess/detect", {
             method: "POST",
             body: formData
         });

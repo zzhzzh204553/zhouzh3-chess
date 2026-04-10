@@ -1,19 +1,33 @@
 package com.zhouzh3.chess.util;
 
 import cn.hutool.core.io.FileUtil;
-import com.zhouzh3.chess.vision.CropParam;
-import com.zhouzh3.chess.vision.ImageCrop;
-import com.zhouzh3.chess.vision.Region;
+import com.zhouzh3.chess.constants.ChessConstants;
+import com.zhouzh3.chess.model.CropParam;
+import com.zhouzh3.chess.model.Region;
+import com.zhouzh3.chess.model.RgbColor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import static com.zhouzh3.chess.constants.ChessConstants.IMAGE_CENTER;
+
+
+/**
+ * @author haig
+ */
+@Slf4j
 public class ImageUtil {
     public static BufferedImage getSubimage(BufferedImage src, Region region) {
         return src.getSubimage(region.x(), region.y(), region.width(), region.height());
@@ -52,18 +66,90 @@ public class ImageUtil {
     }
 
     public static CropParam cropChessPieces() {
-        Region chessBoardRegion = new Region(ImageCrop.BOARD_X, ImageCrop.BOARD_Y, ImageCrop.BOARD_WIDTH, ImageCrop.BOARD_HEIGHT);
+        Region chessBoardRegion = new Region(ChessConstants.BOARD_X, ChessConstants.BOARD_Y, ChessConstants.BOARD_WIDTH, ChessConstants.BOARD_HEIGHT);
         List<List<Region>> chessPieceGrid = new ArrayList<List<Region>>();
-        for (int row = 0; row <= ImageCrop.END_ROW; row++) {
+        for (int row = 0; row <= ChessConstants.END_ROW; row++) {
             List<Region> chessPieceRow = new ArrayList<Region>();
-            for (int col = 0; col <= ImageCrop.END_COL; col++) {
-                int x = (int) (ImageCrop.OFFSET_X + col * (ImageCrop.CHESS_WIDTH + ImageCrop.GAP_X));
-                int y = (int) (ImageCrop.OFFSET_Y + row * (ImageCrop.CHESS_HEIGH + ImageCrop.GAP_Y));
-                chessPieceRow.add(new Region(x, y, ImageCrop.CHESS_WIDTH, ImageCrop.CHESS_HEIGH));
+            for (int col = 0; col <= ChessConstants.END_COL; col++) {
+                int x = (int) (ChessConstants.OFFSET_X + col * (ChessConstants.CHESS_WIDTH + ChessConstants.GAP_X));
+                int y = (int) (ChessConstants.OFFSET_Y + row * (ChessConstants.CHESS_HEIGH + ChessConstants.GAP_Y));
+                chessPieceRow.add(new Region(x, y, ChessConstants.CHESS_WIDTH, ChessConstants.CHESS_HEIGH));
             }
             chessPieceGrid.add(chessPieceRow);
         }
 
         return new CropParam(chessBoardRegion, chessPieceGrid);
+    }
+
+    public static void cropImages(File inputFile, CropParam cropParam) throws IOException {
+        BufferedImage originalImage = ImageIO.read(inputFile);
+        // 定义矩形区域 (x, y, width, height)
+        // 截取矩形区域
+        BufferedImage boardImage = getSubimage(originalImage, cropParam.chessBoardRegion());
+
+        Graphics2D graphics = boardImage.createGraphics();
+        graphics.setColor(Color.RED);
+        graphics.setStroke(new BasicStroke(1));
+
+        // 保存截取后的图片
+        Path path = Paths.get(System.getProperty("java.io.tmpdir"), "chess", FileUtil.getPrefix(inputFile.getName()));
+        Files.createDirectories(path);
+
+        for (int row = 0; row <= ChessConstants.END_ROW; row++) {
+            for (int col = 0; col <= ChessConstants.END_COL; col++) {
+//                int x = (int) (OFFSET_X + col * (CHESS_WIDTH + GAP_X));
+//                int y = (int) (OFFSET_Y + row * (CHESS_HEIGH + GAP_Y));
+                Region region = cropParam.getChessPiece(row, col);
+                BufferedImage cellImage = getSubimage(boardImage, region);
+
+                BufferedImage cropCircle = cropCircle(cellImage);
+                write(cropCircle, path.resolve("cell_" + row + "_" + col + ".png"));
+                graphics.drawRect(region.x(), region.y(), region.width(), region.height());
+
+            }
+        }
+        write(boardImage, path.resolve("zz_board_" + inputFile.getName()));
+        log.info("图片截取完成，保存为{}", path.toAbsolutePath().toString());
+    }
+
+    public static void getCrossingColor(File inputFile, CropParam cropParam) throws IOException {
+        BufferedImage originalImage = ImageIO.read(inputFile);
+        // 定义矩形区域 (x, y, width, height)
+        // 截取矩形区域
+        BufferedImage boardImage = getSubimage(originalImage, cropParam.chessBoardRegion());
+        Graphics2D g2d = boardImage.createGraphics();
+        g2d.setColor(Color.BLACK);
+
+
+        for (int row = 0; row <= ChessConstants.END_ROW; row++) {
+            System.out.print("row_" + row + ": ");
+            for (int col = 0; col <= ChessConstants.END_COL; col++) {
+                Region region = cropParam.getChessPiece(row, col);
+                int x = region.x() + IMAGE_CENTER;
+                int y = region.y() + IMAGE_CENTER;
+                g2d.fillOval(x, y, 5, 5);
+
+                RgbColor rgbColor = getColor(boardImage, x, y);
+                System.out.print(Objects.requireNonNull(rgbColor).toHex() + "    ");
+            }
+            System.out.println("-----------------\n\n");
+        }
+        g2d.dispose();
+        Path chess = Paths.get(System.getProperty("java.io.tmpdir"), "chess", FileUtil.getPrefix(inputFile.getName()) + "_color.png");
+        System.out.println(chess.toAbsolutePath().toString());
+        write(boardImage, chess);
+    }
+
+    @Nullable
+    public static RgbColor getColor(BufferedImage img, int x, int y) {
+        int argb = img.getRGB(x, y);
+        int a = (argb >>> 24) & 255;
+        if (a == 0) {
+            return null;
+        }
+        int r = (argb >> 16) & 255;
+        int g = (argb >> 8) & 255;
+        int b = argb & 255;
+        return new RgbColor(r, g, b);
     }
 }

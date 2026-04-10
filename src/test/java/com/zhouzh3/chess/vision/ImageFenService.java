@@ -1,8 +1,12 @@
 package com.zhouzh3.chess.vision;
 
+import com.zhouzh3.chess.enums.ChessSide;
 import com.zhouzh3.chess.fen.Board;
+import com.zhouzh3.chess.model.ChessCell;
+import com.zhouzh3.chess.model.Region;
+import com.zhouzh3.chess.model.RgbColor;
+import com.zhouzh3.chess.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -170,12 +174,12 @@ public class ImageFenService {
                 if (!circleMask[y][x]) {
                     continue;
                 }
-                Color color = getColor(img, x, y);
-                if (color == null) {
+                RgbColor rgbColor = ImageUtil.getColor(img, x, y);
+                if (rgbColor == null) {
                     continue;
                 }
 
-                int v = color.getV();
+                int v = rgbColor.getV();
                 gray[y][x] = v;
                 sum += v;
                 pixelCount++;
@@ -215,32 +219,19 @@ public class ImageFenService {
                 if (y >= Constants.SIZE || x >= Constants.SIZE || !circleMask[y][x]) {
                     continue;
                 }
-                Color color = getColor(img, x, y);
-                if (color == null) {
+                RgbColor rgbColor = ImageUtil.getColor(img, x, y);
+                if (rgbColor == null) {
                     continue;
                 }
-                if (color.isRedColor()) {
-                    redScore += color.getRedDelta();
-                } else if (color.isDarkColor()) {
-                    darkScore += color.getDarkDelta();
+                if (rgbColor.isRedColor()) {
+                    redScore += rgbColor.getRedDelta();
+                } else if (rgbColor.isDarkColor()) {
+                    darkScore += rgbColor.getDarkDelta();
                 }
             }
         }
         log.info("redScore={}, darkScore={}", redScore, darkScore);
         return fromScore(redScore, darkScore);
-    }
-
-    @Nullable
-    private static Color getColor(BufferedImage img, int x, int y) {
-        int argb = img.getRGB(x, y);
-        int a = (argb >>> 24) & 255;
-        if (a == 0) {
-            return null;
-        }
-        int r = (argb >> 16) & 255;
-        int g = (argb >> 8) & 255;
-        int b = argb & 255;
-        return new Color(r, g, b);
     }
 
     private static boolean isDarkColor(int r, int g, int b) {

@@ -1,6 +1,7 @@
 package com.zhouzh3.chess.vision;
 
 import com.zhouzh3.chess.fen.Board;
+import com.zhouzh3.chess.model.CropParam;
 import com.zhouzh3.chess.util.ImageUtil;
 import org.junit.jupiter.api.Test;
 
@@ -49,7 +50,7 @@ public class ChessDetectorTest {
 
 
         ChessDetector chessDetector = new ChessDetector();
-        Board board = chessDetector.ocrBoard(inputFile, cropParam);
+        Board board = chessDetector.detectChessPieces(inputFile, cropParam);
         System.out.println(board.toFen());
     }
 }

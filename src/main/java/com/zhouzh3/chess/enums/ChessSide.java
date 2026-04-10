@@ -1,4 +1,4 @@
-package com.zhouzh3.chess.vision;
+package com.zhouzh3.chess.enums;
 
 import lombok.Getter;
 

@@ -1,7 +1,13 @@
 package com.zhouzh3.chess.vision;
 
 import cn.hutool.core.io.FileUtil;
+import com.zhouzh3.chess.constants.ChessConstants;
+import com.zhouzh3.chess.enums.ChessSide;
 import com.zhouzh3.chess.fen.Board;
+import com.zhouzh3.chess.model.ChessCell;
+import com.zhouzh3.chess.model.RgbColor;
+import com.zhouzh3.chess.model.CropParam;
+import com.zhouzh3.chess.model.Region;
 import com.zhouzh3.chess.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -42,30 +48,6 @@ public class ChessDetector {
     private static final long EMPTY_COLOR_SCORE_THRESHOLD = 900L;
     private static final double UNKNOWN_PIECE_SCORE_THRESHOLD = 0.72d;
 
-    public static final String ADVISOR = "A";
-    public static final int END_ROW = 9;
-    public static final int END_COL = 8;
-    public static final int IMAGE_SIZE = 114;
-    public static final int IMAGE_RADIUS = IMAGE_SIZE / 2;
-    public static final int IMAGE_CENTER = IMAGE_SIZE / 2;
-
-    public static final Map<String, String> CANDIDATES = Map.ofEntries(
-            Map.entry("R红车", "images/red-ju.png"),
-            Map.entry("N红马", "images/red-ma.png"),
-            Map.entry("B红相", "images/red-xiang.png"),
-            Map.entry("A红仕", "images/red-shi.png"),
-            Map.entry("K红帅", "images/red-shuai.png"),
-            Map.entry("C红炮", "images/red-pao.png"),
-            Map.entry("P红兵", "images/red-bing.png"),
-            Map.entry("r黑车", "images/black-ju.png"),
-            Map.entry("n黑马", "images/black-ma.png"),
-            Map.entry("b黑象", "images/black-xiang.png"),
-            Map.entry("a黑士", "images/black-shi.png"),
-            Map.entry("k黑将", "images/black-jiang.png"),
-            Map.entry("c黑炮", "images/black-pao.png"),
-            Map.entry("p黑卒", "images/black-zu.png|images/black-zu2.png")
-    );
-
 
     private final Map<String, TemplateFeature> pieceTemplates;
     private final boolean[][] circleMask;
@@ -78,7 +60,7 @@ public class ChessDetector {
 
     private Map<String, TemplateFeature> loadPieceTemplates() throws IOException {
         Map<String, TemplateFeature> templates = new LinkedHashMap<>();
-        CANDIDATES.forEach((name, resourcePath) -> {
+        ChessConstants.CANDIDATES.forEach((name, resourcePath) -> {
             try {
                 loadAll(templates, name, resourcePath);
             } catch (IOException e) {
@@ -125,12 +107,12 @@ public class ChessDetector {
     }
 
     private boolean[][] createCircleMask() {
-        boolean[][] mask = new boolean[IMAGE_SIZE][IMAGE_SIZE];
-        for (int y = 0; y < IMAGE_SIZE; y++) {
-            for (int x = 0; x < IMAGE_SIZE; x++) {
-                int dx = x - IMAGE_CENTER;
-                int dy = y - IMAGE_CENTER;
-                mask[y][x] = dx * dx + dy * dy <= IMAGE_RADIUS * IMAGE_RADIUS;
+        boolean[][] mask = new boolean[ChessConstants.IMAGE_SIZE][ChessConstants.IMAGE_SIZE];
+        for (int y = 0; y < ChessConstants.IMAGE_SIZE; y++) {
+            for (int x = 0; x < ChessConstants.IMAGE_SIZE; x++) {
+                int dx = x - ChessConstants.IMAGE_CENTER;
+                int dy = y - ChessConstants.IMAGE_CENTER;
+                mask[y][x] = dx * dx + dy * dy <= ChessConstants.IMAGE_RADIUS * ChessConstants.IMAGE_RADIUS;
             }
         }
         return mask;
@@ -155,31 +137,31 @@ public class ChessDetector {
         long squareSum = 0;
         long redScore = 0;
         long darkScore = 0;
-        int[][] gray = new int[IMAGE_SIZE][IMAGE_SIZE];
+        int[][] gray = new int[ChessConstants.IMAGE_SIZE][ChessConstants.IMAGE_SIZE];
         int pixelCount = 0;
         int foregroundCount = 0;
-        for (int y = 0; y < IMAGE_SIZE; y++) {
-            for (int x = 0; x < IMAGE_SIZE; x++) {
+        for (int y = 0; y < ChessConstants.IMAGE_SIZE; y++) {
+            for (int x = 0; x < ChessConstants.IMAGE_SIZE; x++) {
                 if (!circleMask[y][x]) {
                     continue;
                 }
-                Color color = getColor(img, x, y);
-                if (color == null) {
+                RgbColor rgbColor = getColor(img, x, y);
+                if (rgbColor == null) {
                     continue;
                 }
 
-                int v = color.getV();
+                int v = rgbColor.getV();
                 gray[y][x] = v;
                 sum += v;
                 squareSum += (long) v * v;
                 pixelCount++;
-                if (isForegroundPixel(color)) {
+                if (isForegroundPixel(rgbColor)) {
                     foregroundCount++;
                 }
-                if (color.isRedColor()) {
-                    redScore += color.getRedDelta();
-                } else if (color.isDarkColor()) {
-                    darkScore += color.getDarkDelta();
+                if (rgbColor.isRedColor()) {
+                    redScore += rgbColor.getRedDelta();
+                } else if (rgbColor.isDarkColor()) {
+                    darkScore += rgbColor.getDarkDelta();
                 }
             }
         }
@@ -190,12 +172,12 @@ public class ChessDetector {
         double variance = Math.max(0d, ((double) squareSum / pixelCount) - avg * avg);
         double contrast = Math.sqrt(variance);
         double activeDeltaThreshold = Math.max(12d, contrast * 0.65d);
-        StringBuilder sb = new StringBuilder(IMAGE_SIZE * IMAGE_SIZE);
+        StringBuilder sb = new StringBuilder(ChessConstants.IMAGE_SIZE * ChessConstants.IMAGE_SIZE);
         double edgeSum = 0d;
         int edgeCount = 0;
         int activeCount = 0;
-        for (int y = 0; y < IMAGE_SIZE; y++) {
-            for (int x = 0; x < IMAGE_SIZE; x++) {
+        for (int y = 0; y < ChessConstants.IMAGE_SIZE; y++) {
+            for (int x = 0; x < ChessConstants.IMAGE_SIZE; x++) {
                 if (!circleMask[y][x]) {
                     continue;
                 }
@@ -217,7 +199,7 @@ public class ChessDetector {
     }
 
     @Nullable
-    private static Color getColor(BufferedImage img, int x, int y) {
+    private static RgbColor getColor(BufferedImage img, int x, int y) {
         int argb = img.getRGB(x, y);
         int a = (argb >>> 24) & 255;
         if (a == 0) {
@@ -226,7 +208,7 @@ public class ChessDetector {
         int r = (argb >> 16) & 255;
         int g = (argb >> 8) & 255;
         int b = argb & 255;
-        return new Color(r, g, b);
+        return new RgbColor(r, g, b);
     }
 
 
@@ -271,7 +253,7 @@ public class ChessDetector {
 
         // 巡河和骑河，是不可能有红仕的
         if (row == 4 || row == 5) {
-            if (best != null && best.contains(ADVISOR)) {
+            if (best != null && best.contains(ChessConstants.ADVISOR)) {
                 best = "";
             }
         }
@@ -322,8 +304,8 @@ public class ChessDetector {
         double templateContrast = Math.max(templateMetrics.contrast(), 1d);
         double totalGap = 0d;
         int count = 0;
-        for (int y = 0; y < IMAGE_SIZE; y++) {
-            for (int x = 0; x < IMAGE_SIZE; x++) {
+        for (int y = 0; y < ChessConstants.IMAGE_SIZE; y++) {
+            for (int x = 0; x < ChessConstants.IMAGE_SIZE; x++) {
                 if (!circleMask[y][x]) {
                     continue;
                 }
@@ -346,8 +328,8 @@ public class ChessDetector {
         return (Math.abs(sourceRedRatio - templateRedRatio) + Math.abs(sourceDarkRatio - templateDarkRatio)) / 2d;
     }
 
-    private boolean isForegroundPixel(Color color) {
-        return color.isRedColor() || color.isDarkColor();
+    private boolean isForegroundPixel(RgbColor rgbColor) {
+        return rgbColor.isRedColor() || rgbColor.isDarkColor();
     }
 
     private ChessSide parsePieceSide(BufferedImage img, ImageMetrics metrics) {
@@ -385,9 +367,9 @@ public class ChessDetector {
     protected Board ocrBoard(List<List<String>> inputImages) throws IOException {
         ClassLoader classLoader = getClass().getClassLoader();
         Board board = new Board();
-        for (int row = 0; row <= ChessDetector.END_ROW; row++) {
+        for (int row = 0; row <= ChessConstants.END_ROW; row++) {
             System.out.println("row " + row + ": ");
-            for (int col = 0; col <= ChessDetector.END_COL; col++) {
+            for (int col = 0; col <= ChessConstants.END_COL; col++) {
                 String inputImage = inputImages.get(row).get(col);
                 try (InputStream inputStream = classLoader.getResourceAsStream(inputImage)) {
                     BufferedImage bufferedImage = ImageIO.read(Objects.requireNonNull(inputStream));
@@ -401,7 +383,7 @@ public class ChessDetector {
     }
 
 
-    public Board ocrBoard(File inputFile, CropParam cropParam) throws IOException {
+    public Board detectChessPieces(File inputFile, CropParam cropParam) throws IOException {
         BufferedImage originalImage = ImageIO.read(inputFile);
         // 定义矩形区域 (x, y, width, height)
         // 截取矩形区域
@@ -416,9 +398,9 @@ public class ChessDetector {
         Files.createDirectories(path);
 
         Board board = new Board();
-        for (int row = 0; row <= END_ROW; row++) {
-            for (int col = 0; col <= END_COL; col++) {
-                Region region = cropParam.getChessPieceRegion(row, col);
+        for (int row = 0; row <= ChessConstants.END_ROW; row++) {
+            for (int col = 0; col <= ChessConstants.END_COL; col++) {
+                Region region = cropParam.getChessPiece(row, col);
                 BufferedImage cellImage = getSubimage(boardImage, region);
                 BufferedImage cropCircle = cropCircle(cellImage);
                 ChessCell cell = this.choose(cropCircle, row, col);
@@ -435,6 +417,8 @@ public class ChessDetector {
 
         return board;
     }
+
+
 
 
 }
