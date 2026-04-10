@@ -1,31 +1,38 @@
 package com.zhouzh3.chess.constants;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.util.Map;
 
 /**
  * @author haig
  */
 public class ChessConstants {
+    public static final int SIDE_LENGTH = 125;
+    public static final int ORIGIN_X = 78;
+    public static final int ORIGIN_Y = 77;
+//    public static final int CELL_RADIUS = 55;
+
     public static final int BOARD_X = 10;
     public static final int BOARD_Y = 676;
     public static final int BOARD_WIDTH = 1159;
     public static final int BOARD_HEIGHT = 1286;
-    public static final int OFFSET_X = 22;
+
+    public static final int OFFSET_X = 20;
     public static final int OFFSET_Y = 14;
-    public static final int CHESS_WIDTH = 136 - OFFSET_X;
+
+    public static final int CHESS_WIDTH = 135 - OFFSET_X;
     public static final int CHESS_HEIGH = 134 - OFFSET_Y;
-    public static final float GAP_X = 11;
+
+
+    public static final float GAP_X = 10;
     public static final float GAP_Y = 5;
+
     public static final int END_ROW = 9;
     public static final int END_COL = 8;
+    public static final int CROSSING_COUNT = (END_ROW + 1) * (END_COL + 1);
 
 
     public static final String ADVISOR = "A";
-//    public static final int END_ROW = 9;
-//    public static final int END_COL = 8;
+
     public static final int IMAGE_SIZE = 114;
     public static final int IMAGE_CENTER = IMAGE_SIZE / 2;
     public static final int IMAGE_RADIUS = IMAGE_SIZE / 2;
@@ -45,4 +52,6 @@ public class ChessConstants {
             Map.entry("c黑炮", "images/black-pao.png"),
             Map.entry("p黑卒", "images/black-zu.png|images/black-zu2.png")
     );
+    public static final char RED_2_MOVE = 'w';
+    public static final char BLACK_2_MOVE = 'b';
 }

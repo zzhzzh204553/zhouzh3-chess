@@ -41,16 +41,16 @@ public class ChessDetectorTest {
     }
 
 
-    @Test
-    public void test() throws IOException {
-        // 读取原始图片
-        File inputFile = new File("D:\\git.codex\\zhouzh3-chess\\src\\main\\resources\\images\\5.png");
-
-        CropParam cropParam = ImageUtil.cropChessPieces();
-
-
-        ChessDetector chessDetector = new ChessDetector();
-        Board board = chessDetector.detectChessPieces(inputFile, cropParam);
-        System.out.println(board.toFen());
-    }
+//    @Test
+//    public void test() throws IOException {
+//        // 读取原始图片
+//        File inputFile = new File("D:\\git.codex\\zhouzh3-chess\\src\\main\\resources\\images\\5.png");
+//
+//        CropParam cropParam = ImageUtil.cropPiecesNew();
+//
+//
+//        ChessDetector chessDetector = new ChessDetector();
+//        Board board = chessDetector.detectChessPieces(inputFile, cropParam);
+//        System.out.println(board.toFen());
+//    }
 }

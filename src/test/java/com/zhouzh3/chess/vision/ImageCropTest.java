@@ -13,7 +13,7 @@ public class ImageCropTest {
         // 读取原始图片
         File inputFile = new File("D:\\git.codex\\zhouzh3-chess\\src\\main\\resources\\images\\8.png");
 
-        CropParam cropParam = ImageUtil.cropChessPieces();
+        CropParam cropParam = ImageUtil.cropPieces();
         ImageUtil.cropImages(inputFile, cropParam);
 
 //        Map<String, String> map = imageCrop.loadPieceHashes();

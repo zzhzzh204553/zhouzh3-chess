@@ -4,10 +4,8 @@ import cn.hutool.core.io.FileUtil;
 import com.zhouzh3.chess.constants.ChessConstants;
 import com.zhouzh3.chess.enums.ChessSide;
 import com.zhouzh3.chess.fen.Board;
-import com.zhouzh3.chess.model.ChessCell;
-import com.zhouzh3.chess.model.RgbColor;
-import com.zhouzh3.chess.model.CropParam;
-import com.zhouzh3.chess.model.Region;
+import com.zhouzh3.chess.model.*;
+import com.zhouzh3.chess.util.ColorUtil;
 import com.zhouzh3.chess.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -22,11 +20,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
+import static com.zhouzh3.chess.constants.ChessConstants.*;
 import static com.zhouzh3.chess.util.ImageUtil.cropCircle;
 import static com.zhouzh3.chess.util.ImageUtil.getSubimage;
 
@@ -47,6 +44,9 @@ public class ChessDetector {
     private static final double EMPTY_ACTIVE_COVERAGE_THRESHOLD = 0.18d;
     private static final long EMPTY_COLOR_SCORE_THRESHOLD = 900L;
     private static final double UNKNOWN_PIECE_SCORE_THRESHOLD = 0.72d;
+
+    public static final RgbColor STARTING_COLOR = new RgbColor(247, 247, 247);
+    public static final RgbColor DESTINATION_COLOR = new RgbColor(237, 220, 200);
 
 
     private final Map<String, TemplateFeature> pieceTemplates;
@@ -229,8 +229,7 @@ public class ChessDetector {
         }
         ImageMetrics metrics = extractMetrics(cellImage);
         ChessSide chessSide = parsePieceSide(cellImage, metrics);
-        log.info("chessSide={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}",
-                chessSide, metrics.mean(), metrics.contrast(), metrics.edgeDensity(), metrics.foregroundCoverage());
+//        log.info("chessSide={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}", chessSide, metrics.mean(), metrics.contrast(), metrics.edgeDensity(), metrics.foregroundCoverage());
         if (chessSide == ChessSide.EMPTY) {
             return new ChessCell(row, col, ".");
         }
@@ -246,7 +245,7 @@ public class ChessDetector {
                 best = entry.getKey();
             }
         }
-        log.info("best={}, score={}", best, bestScore);
+//        log.info("best={}, score={}", best, bestScore);
         if (best == null || bestScore > UNKNOWN_PIECE_SCORE_THRESHOLD) {
             return new ChessCell(row, col, ".");
         }
@@ -343,12 +342,12 @@ public class ChessDetector {
                 && metrics.edgeDensity() < EMPTY_EDGE_DENSITY_THRESHOLD * 1.15d
                 && metrics.contrast() < EMPTY_CONTRAST_THRESHOLD * 1.2d;
         if (looksEmpty || lacksPieceStructure || colorScore < EMPTY_COLOR_SCORE_THRESHOLD) {
-            log.info("empty cell detected: redScore={}, darkScore={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}, activeCoverage={}",
-                    redScore, darkScore, metrics.mean(), metrics.contrast(), metrics.edgeDensity(),
-                    metrics.foregroundCoverage(), metrics.activeCoverage());
+//            log.info("empty cell detected: redScore={}, darkScore={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}, activeCoverage={}",
+//                    redScore, darkScore, metrics.mean(), metrics.contrast(), metrics.edgeDensity(),
+//                    metrics.foregroundCoverage(), metrics.activeCoverage());
             return ChessSide.EMPTY;
         }
-        log.info("redScore={}, darkScore={}", redScore, darkScore);
+//        log.info("redScore={}, darkScore={}", redScore, darkScore);
         if (redScore > darkScore * RED_DOMINANCE_RATIO && redScore - darkScore > RED_DOMINANCE_DELTA) {
             return ChessSide.RED;
         }
@@ -383,42 +382,126 @@ public class ChessDetector {
     }
 
 
+    public static final int WHITE_POINT_X = 19;
+    public static final int WHITE_POINT_Y = 10;
+
     public Board detectChessPieces(File inputFile, CropParam cropParam) throws IOException {
         BufferedImage originalImage = ImageIO.read(inputFile);
         // 定义矩形区域 (x, y, width, height)
         // 截取矩形区域
         BufferedImage boardImage = getSubimage(originalImage, cropParam.chessBoardRegion());
 
-        Graphics2D graphics = boardImage.createGraphics();
-        graphics.setColor(java.awt.Color.RED);
-        graphics.setStroke(new BasicStroke(1));
+        Graphics2D g2dBoard = boardImage.createGraphics();
+        g2dBoard.setColor(Color.BLACK);
+        g2dBoard.setStroke(new BasicStroke(1));
 
         // 保存截取后的图片
         Path path = Paths.get(System.getProperty("java.io.tmpdir"), "chess", FileUtil.getPrefix(inputFile.getName()));
         Files.createDirectories(path);
 
+
         Board board = new Board();
         for (int row = 0; row <= ChessConstants.END_ROW; row++) {
+            System.out.print(row + ": ");
             for (int col = 0; col <= ChessConstants.END_COL; col++) {
                 Region region = cropParam.getChessPiece(row, col);
                 BufferedImage cellImage = getSubimage(boardImage, region);
+
+                RgbColor color = ImageUtil.getColor(cellImage, WHITE_POINT_X, WHITE_POINT_Y);
+                System.out.print(row + "_" + col + Objects.requireNonNull(color).toHex() + "    ");
+                Graphics2D g2dCell = cellImage.createGraphics();
+                g2dCell.setColor(java.awt.Color.RED);
+                g2dCell.setStroke(new BasicStroke(1));
+                g2dCell.fillOval(WHITE_POINT_X - 1, WHITE_POINT_Y - 1, 2, 2);
+                g2dCell.fillOval(WHITE_POINT_Y - 1, WHITE_POINT_X - 1, 2, 2);
+                g2dCell.fillOval(CHESS_WIDTH - WHITE_POINT_X + 1, WHITE_POINT_Y, 2, 2);
+                g2dCell.fillOval(CHESS_WIDTH - WHITE_POINT_Y + 1, WHITE_POINT_X, 2, 2);
+
+
+                g2dCell.dispose();
+                ImageUtil.write(cellImage, path.resolve("cell_" + row + "_" + col + "_a.png"));
+
+
                 BufferedImage cropCircle = cropCircle(cellImage);
                 ChessCell cell = this.choose(cropCircle, row, col);
                 board.setPiece(row, col, cell.chessName().charAt(0));
 
-                ImageUtil.write(cropCircle, path.resolve("cell_" + row + "_" + col + ".png"));
-                graphics.drawRect(region.x(), region.y(), region.width(), region.height());
+                ImageUtil.write(cropCircle, path.resolve("cell_" + row + "_" + col + "_b.png"));
+            }
+            System.out.println("\n-----------------\n");
+        }
 
+        AbstractMap.SimpleEntry<Coordinate, Coordinate> lastMove = getStartingDestination(boardImage, cropParam);
+        System.out.println("上一步位置是：" + lastMove.getKey() + "_" + lastMove.getValue());
+
+        final int radius = 4;
+        for (int row = 0; row <= ChessConstants.END_ROW; row++) {
+            for (int col = 0; col <= ChessConstants.END_COL; col++) {
+                Region region = cropParam.getChessPiece(row, col);
+                g2dBoard.drawRect(region.x(), region.y(), region.width(), region.height());
+                g2dBoard.fillOval(region.x() + CHESS_WIDTH / 2 - radius, region.y() + CHESS_HEIGH / 2 - radius, 2 * radius, 2 * radius);
             }
         }
+        g2dBoard.dispose();
 
         ImageUtil.write(boardImage, path.resolve("zz_board_" + inputFile.getName()));
         log.info("图片截取完成，保存为{}", path.toAbsolutePath().toString());
 
+        char piece = board.getPiece(lastMove.getValue().x(), lastMove.getValue().y());
+        boolean isBlack = Character.isLowerCase(piece);
+        log.info("当前走棋方：{}, piece={}, isBlack={}, {}", lastMove.getValue(), piece, isBlack, isBlack ? "黑方" : "红方");
+
+        board.setSideToMove(isBlack ? RED_2_MOVE : BLACK_2_MOVE);
+
         return board;
     }
 
+    /**
+     * 获取上一步的位置和下一步的位置
+     * @param boardImage
+     * @param cropParam
+     * @return
+     */
+    private static AbstractMap.SimpleEntry<Coordinate, Coordinate> getStartingDestination(BufferedImage boardImage, CropParam cropParam) {
+        Map<Coordinate, RgbColor> startingPoints = new HashMap<>(CROSSING_COUNT);
+        Map<Coordinate, RgbColor> destinationPoints = new HashMap<>(CROSSING_COUNT);
 
+        for (int row = 0; row <= ChessConstants.END_ROW; row++) {
+            for (int col = 0; col <= ChessConstants.END_COL; col++) {
+                Region region = cropParam.getChessPiece(row, col);
+                BufferedImage cellImage = getSubimage(boardImage, region);
+
+                Coordinate coordinate = new Coordinate(row, col);
+                RgbColor startingColor = ImageUtil.getColor(cellImage, CHESS_WIDTH / 2, CHESS_HEIGH / 2);
+                startingPoints.put(coordinate, startingColor);
+
+
+                destinationPoints.put(coordinate, getAvgColor(cellImage));
+            }
+        }
+
+        return new AbstractMap.SimpleEntry<>(
+                ColorUtil.findClosestColor(startingPoints, STARTING_COLOR),
+                ColorUtil.findClosestColor(destinationPoints, DESTINATION_COLOR)
+        );
+    }
+
+    private static RgbColor getAvgColor(BufferedImage cellImage) {
+//       (pointX - 1, pointY - 1),
+//       (pointY - 1, pointX - 1),
+//       (CHESS_WIDTH - pointX + 1, pointY),
+//       (CHESS_WIDTH - pointY + 1, pointX)
+
+
+//        RgbColor color = ImageUtil.getColor(cellImage, region.x() + CHESS_WIDTH / 2, region.y() + CHESS_HEIGH / 2);
+        return ColorUtil.average(
+                Arrays.asList(ImageUtil.getColor(cellImage, WHITE_POINT_X - 1, WHITE_POINT_Y - 1),
+                        ImageUtil.getColor(cellImage, WHITE_POINT_Y - 1, WHITE_POINT_X - 1),
+                        ImageUtil.getColor(cellImage, CHESS_WIDTH - WHITE_POINT_X + 1, WHITE_POINT_Y),
+                        ImageUtil.getColor(cellImage, CHESS_WIDTH - WHITE_POINT_Y + 1, WHITE_POINT_X))
+
+        );
+    }
 
 
 }

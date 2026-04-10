@@ -1,12 +1,24 @@
 package com.zhouzh3.chess.fen;
 
+import com.zhouzh3.chess.constants.ChessConstants;
+import lombok.Getter;
+import lombok.Setter;
+
 public class Board {
-    private static final int ROWS = 10;
-    private static final int COLS = 9;
+    public static final int ROWS = 10;
+    public static final int COLS = 9;
+
     private final char[][] board = new char[ROWS][COLS];
 
+    /**
+     * 'w' 表示红方，'b' 表示黑方
+     */
+    @Getter
+    @Setter
+    private char sideToMove = ChessConstants.RED_2_MOVE;
+
     public void initBoard() {
-        String fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR";
+        String fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
         loadFen(fen);
     }
 
@@ -35,6 +47,15 @@ public class Board {
         board[row][col] = piece;
     }
 
+    public char getPiece(int row, int col) {
+        if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
+            throw new IllegalArgumentException("Invalid position: (" + row + ", " + col + ")");
+        }
+
+
+        return board[row][col];
+    }
+
     public String toFen() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ROWS; i++) {
@@ -58,6 +79,7 @@ public class Board {
                 sb.append('/');
             }
         }
+        sb.append(' ').append(sideToMove);
         return sb.toString();
     }
 }

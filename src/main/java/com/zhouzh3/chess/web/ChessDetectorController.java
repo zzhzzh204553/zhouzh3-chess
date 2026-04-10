@@ -37,7 +37,7 @@ public class ChessDetectorController {
         try {
             file.transferTo(screenshot);
 
-            CropParam cropParam = ImageUtil.cropChessPieces();
+            CropParam cropParam = ImageUtil.cropPiecesNew();
             Board board = chessDetector.detectChessPieces(screenshot.toFile(), cropParam);
 //            ImageFenService imageFenService = new ImageFenService();
 //            String fen = imageFenService.parseImageFen(screenshot, true);

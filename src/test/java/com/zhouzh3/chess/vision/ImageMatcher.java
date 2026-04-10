@@ -1,7 +1,7 @@
 package com.zhouzh3.chess.vision;
 
 import com.zhouzh3.chess.fen.Board;
-import com.zhouzh3.chess.model.Point;
+import com.zhouzh3.chess.model.Coordinate;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -123,7 +123,7 @@ public class ImageMatcher {
 
         ImageMatcher imageMatcher = new ImageMatcher();
 
-        List<Point> validAdvisors = Arrays.asList(Point.of(0, 3), Point.of(0, 5), Point.of(2, 3), Point.of(2, 5));
+        List<Coordinate> validAdvisors = Arrays.asList(Coordinate.of(0, 3), Coordinate.of(0, 5), Coordinate.of(2, 3), Coordinate.of(2, 5));
 
         Board board = new Board();
         for (int row = 0; row <= END_ROW; row++) {
@@ -139,9 +139,9 @@ public class ImageMatcher {
                 char name = results.get(0).name.charAt(0);
 //                String color = name.contains("红") ? "\u001B[31m" + name.substring(name.length() - 1) + "\u001B[0m" : "\u001B[37m" + name.substring(name.length() - 1) + "\u001B[0m";
 //                System.out.print(color + "\t");
-                if ('a' == (name) && !validAdvisors.contains(Point.of(row, col))) {
+                if ('a' == (name) && !validAdvisors.contains(Coordinate.of(row, col))) {
                     name = '.';
-                } else if ('A' == name && !validAdvisors.contains(Point.of(END_ROW - row, col))) {
+                } else if ('A' == name && !validAdvisors.contains(Coordinate.of(END_ROW - row, col))) {
                     name = '.';
                 }
 
