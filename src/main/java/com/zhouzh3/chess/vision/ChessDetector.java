@@ -223,7 +223,7 @@ public class ChessDetector {
         }
     }
 
-    public ChessCell choose(BufferedImage cellImage, int row, int col) {
+    public ChessCell detectChessPiece(BufferedImage cellImage, int row, int col) {
         if (pieceTemplates.isEmpty()) {
             throw new IllegalStateException("棋子模板尚未初始化");
         }
@@ -251,11 +251,11 @@ public class ChessDetector {
         }
 
         // 巡河和骑河，是不可能有红仕的
-        if (row == 4 || row == 5) {
-            if (best != null && best.contains(ChessConstants.ADVISOR)) {
-                best = "";
-            }
-        }
+//        if (row == 4 || row == 5) {
+//            if (best != null && best.contains(ChessConstants.ADVISOR)) {
+//                best = "";
+//            }
+//        }
 
 
         return new ChessCell(row, col, normalizeName(best));
@@ -288,6 +288,7 @@ public class ChessDetector {
         double activeCoverageGap = Math.abs(metrics.activeCoverage() - templateMetrics.activeCoverage());
         double colorGap = colorGap(metrics, templateMetrics);
         double sidePenalty = chessSide == ChessSide.EMPTY || chessSide == template.side() ? 0d : 0.20d;
+
         return structuralGap * 0.70d
                 + normalizedHash * 0.15d
                 + colorGap * 0.12d
@@ -372,7 +373,7 @@ public class ChessDetector {
                 String inputImage = inputImages.get(row).get(col);
                 try (InputStream inputStream = classLoader.getResourceAsStream(inputImage)) {
                     BufferedImage bufferedImage = ImageIO.read(Objects.requireNonNull(inputStream));
-                    ChessCell cell = this.choose(bufferedImage, row, col);
+                    ChessCell cell = this.detectChessPiece(bufferedImage, row, col);
                     System.out.println("====" + cell);
                     board.setPiece(row, col, cell.chessName().charAt(0));
                 }
@@ -423,7 +424,7 @@ public class ChessDetector {
 
 
                 BufferedImage cropCircle = cropCircle(cellImage);
-                ChessCell cell = this.choose(cropCircle, row, col);
+                ChessCell cell = this.detectChessPiece(cropCircle, row, col);
                 board.setPiece(row, col, cell.chessName().charAt(0));
 
                 ImageUtil.write(cropCircle, path.resolve("cell_" + row + "_" + col + "_b.png"));
