@@ -109,7 +109,7 @@ public class ImageUtil {
             }
         }
         write(boardImage, path.resolve("zz_board_" + inputFile.getName()));
-        log.info("图片截取完成，保存为{}", path.toAbsolutePath().toString());
+        log.info("图片截取完成，保存为{}", path.toAbsolutePath().toUri().toURL().toString());
     }
 
     public static CropParam cropPiecesNew() {

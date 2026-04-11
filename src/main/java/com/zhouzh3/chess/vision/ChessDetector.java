@@ -47,6 +47,7 @@ public class ChessDetector {
 
     public static final RgbColor STARTING_COLOR = new RgbColor(247, 247, 247);
     public static final RgbColor DESTINATION_COLOR = new RgbColor(237, 220, 200);
+    public static final String IMAGE_DIR = "images/";
 
 
     private final boolean[][] circleMask;
@@ -100,10 +101,21 @@ public class ChessDetector {
         }
     }
 
+    public static String ensureImagesPrefix(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+        if (!filename.startsWith(IMAGE_DIR)) {
+            return IMAGE_DIR + filename;
+        }
+        return filename;
+    }
+
     private void load(Map<String, TemplateFeature> templates, String name, String resourcePath) throws IOException {
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+        String newPath = ensureImagesPrefix(resourcePath);
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(newPath)) {
             if (inputStream == null) {
-                throw new IOException("模板不存在: " + resourcePath);
+                throw new IOException("模板不存在: " + newPath);
             }
             BufferedImage image = ImageIO.read(inputStream);
             templates.put(name, new TemplateFeature(getPieceSide(name), extractMetrics(image)));
@@ -227,7 +239,7 @@ public class ChessDetector {
         }
     }
 
-    public ChessCell detectChessPiece(BufferedImage cellImage, int row, int col) {
+    public ChessPiece detectChessPiece(BufferedImage cellImage, int row, int col) {
         if (pieceTemplates.isEmpty()) {
             throw new IllegalStateException("棋子模板尚未初始化");
         }
@@ -235,7 +247,7 @@ public class ChessDetector {
         ChessSide chessSide = parsePieceSide(cellImage, metrics);
 //        log.info("chessSide={}, mean={}, contrast={}, edgeDensity={}, foregroundCoverage={}", chessSide, metrics.mean(), metrics.contrast(), metrics.edgeDensity(), metrics.foregroundCoverage());
         if (chessSide == ChessSide.EMPTY) {
-            return new ChessCell(row, col, ".");
+            return new ChessPiece(row, col, ".");
         }
 
         String best = null;
@@ -251,7 +263,7 @@ public class ChessDetector {
         }
 //        log.info("best={}, score={}", best, bestScore);
         if (best == null || bestScore > UNKNOWN_PIECE_SCORE_THRESHOLD) {
-            return new ChessCell(row, col, ".");
+            return new ChessPiece(row, col, ".");
         }
 
         // 巡河和骑河，是不可能有红仕的
@@ -262,7 +274,7 @@ public class ChessDetector {
 //        }
 
 
-        return new ChessCell(row, col, normalizeName(best));
+        return new ChessPiece(row, col, normalizeName(best));
     }
 
     private String normalizeName(String name) {
@@ -377,7 +389,7 @@ public class ChessDetector {
                 String inputImage = inputImages.get(row).get(col);
                 try (InputStream inputStream = classLoader.getResourceAsStream(inputImage)) {
                     BufferedImage bufferedImage = ImageIO.read(Objects.requireNonNull(inputStream));
-                    ChessCell cell = this.detectChessPiece(bufferedImage, row, col);
+                    ChessPiece cell = this.detectChessPiece(bufferedImage, row, col);
                     System.out.println("====" + cell);
                     board.setPiece(row, col, cell.chessName().charAt(0));
                 }
@@ -424,13 +436,13 @@ public class ChessDetector {
 
 
                 g2dCell.dispose();
-                ImageUtil.write(cellImage, path.resolve("cell_" + row + "_" + col + "_a.png"));
 
 
                 BufferedImage cropCircle = cropCircle(cellImage);
-                ChessCell cell = this.detectChessPiece(cropCircle, row, col);
-                board.setPiece(row, col, cell.chessName().charAt(0));
+                ChessPiece chessPiece = this.detectChessPiece(cropCircle, row, col);
+                board.setPiece(row, col, chessPiece.chessName().charAt(0));
 
+                ImageUtil.write(cellImage, path.resolve("cell_" + row + "_" + col + "_" + chessPiece.chessName() + "_.png"));
                 ImageUtil.write(cropCircle, path.resolve("cell_" + row + "_" + col + "_b.png"));
             }
             System.out.println("\n-----------------\n");
@@ -450,7 +462,7 @@ public class ChessDetector {
         g2dBoard.dispose();
 
         ImageUtil.write(boardImage, path.resolve("zz_board_" + inputFile.getName()));
-        log.info("图片截取完成，保存为{}", path.toAbsolutePath().toString());
+        log.info("图片截取完成，保存为{}", path.toAbsolutePath().toUri().toURL().toString());
 
         char piece = board.getPiece(lastMove.getValue().x(), lastMove.getValue().y());
         boolean isBlack = Character.isLowerCase(piece);

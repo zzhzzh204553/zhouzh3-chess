@@ -23,7 +23,7 @@ public class ImageUtilTest {
 
     @Test
     public void testDetectChessPieces() throws IOException {
-        File inputFile = new File("D:\\git.codex\\zhouzh3-chess\\src\\main\\resources\\images\\10.png");
+        File inputFile = new File("D:\\git.codex\\zhouzh3-chess\\src\\main\\resources\\images\\9.png");
         CropParam cropParam = ImageUtil.cropPiecesNew();
 
         ChessDetector chessDetector = new ChessDetector();

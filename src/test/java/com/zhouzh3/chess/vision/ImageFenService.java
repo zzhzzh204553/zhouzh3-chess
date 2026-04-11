@@ -2,7 +2,7 @@ package com.zhouzh3.chess.vision;
 
 import com.zhouzh3.chess.enums.ChessSide;
 import com.zhouzh3.chess.fen.Board;
-import com.zhouzh3.chess.model.ChessCell;
+import com.zhouzh3.chess.model.ChessPiece;
 import com.zhouzh3.chess.model.Region;
 import com.zhouzh3.chess.model.RgbColor;
 import com.zhouzh3.chess.util.ImageUtil;
@@ -96,7 +96,7 @@ public class ImageFenService {
         return Map.copyOf(hashes);
     }
 
-    public ChessCell identifyPiece(BufferedImage cellImage, int row, int col) {
+    public ChessPiece identifyPiece(BufferedImage cellImage, int row, int col) {
         if (pieceHashes.isEmpty()) {
             throw new IllegalStateException("棋子模板尚未初始化");
         }
@@ -104,7 +104,7 @@ public class ImageFenService {
         ChessSide chessSide = parsePieceSide(normalized);
         log.info("chessSide={}", chessSide);
 //        if (chessSide == ChessSide.EMPTY) {
-//            return new ChessCell(row, col, "");
+//            return new ChessPiece(row, col, "");
 //        }
 
         String hash = generateHash(normalized);
@@ -128,10 +128,10 @@ public class ImageFenService {
 //            if (best != null) {
 //                String upperCase = best.substring(0, 1).toUpperCase();
 //                if (Arrays.asList("B", "A", "K", "P").contains(upperCase)) {
-//                    return new ChessCell(row, col, best);
+//                    return new ChessPiece(row, col, best);
 //                }
 //            }
-            return new ChessCell(row, col, "");
+            return new ChessPiece(row, col, "");
         }
 
 
@@ -143,7 +143,7 @@ public class ImageFenService {
         }
 
 
-        return new ChessCell(row, col, best);
+        return new ChessPiece(row, col, best);
     }
 
     private void load(Map<String, String> hashes, String name, String resourcePath) throws IOException {
@@ -307,17 +307,17 @@ public class ImageFenService {
                 BufferedImage cropCircle = cropCircle(cellImage);
 
                 // 骑河和巡河，是不可能有仕的
-                ChessCell chessCell = identifyPiece(cropCircle, row, col);
+                ChessPiece chessPiece = identifyPiece(cropCircle, row, col);
 
-                board.setPiece(row, col, chessCell.chessName().isEmpty() ? '.' : chessCell.chessName().charAt(0));
+                board.setPiece(row, col, chessPiece.chessName().isEmpty() ? '.' : chessPiece.chessName().charAt(0));
 
                 if (debugOutput) {
-                    writeSampleImage(cropCircle, outputDir, chessCell);
+                    writeSampleImage(cropCircle, outputDir, chessPiece);
                     graphics.drawRect(region.x(), region.y(), region.width(), region.height());
                 }
 
 
-                sb.append(MessageFormat.format(" {0}", chessCell));
+                sb.append(MessageFormat.format(" {0}", chessPiece));
                 log.info(sb.toString());
                 log.info("===========================\n");
             }
@@ -369,8 +369,8 @@ public class ImageFenService {
         return new Region(left, top, width, height);
     }
 
-    private void writeSampleImage(BufferedImage cropCircle, Path outputDir, ChessCell chessCell) throws IOException {
-        Path samplePath = outputDir.resolve(String.format("cell_%d_%d_%s.png", chessCell.row(), chessCell.col(), chessCell.chessName()));
+    private void writeSampleImage(BufferedImage cropCircle, Path outputDir, ChessPiece chessPiece) throws IOException {
+        Path samplePath = outputDir.resolve(String.format("cell_%d_%d_%s.png", chessPiece.row(), chessPiece.col(), chessPiece.chessName()));
         ImageIO.write(cropCircle, "png", samplePath.toFile());
 //        log.info("sample image: {}", samplePath);
     }

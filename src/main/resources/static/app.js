@@ -45,6 +45,7 @@ const fenInput = document.getElementById("fenInput");
 const currentFenDisplay = document.getElementById("currentFenDisplay");
 const movesInput = document.getElementById("movesInput");
 const applyButton = document.getElementById("applyButton");
+const cancelButton = document.getElementById("cancelButton");
 const imageInput = document.getElementById("imageInput");
 const imageApplyButton = document.getElementById("imageApplyButton");
 const startButton = document.getElementById("startButton");
@@ -809,6 +810,7 @@ function moveSelectedPieceTo(row, col) {
 function resetBoardState() {
     currentPieces = [];
     currentFenSuffix = "";
+    originalFenInput = "";
     selectedPiece = null;
     lastMove = null;
     currentSide = "w";
@@ -822,6 +824,15 @@ function resetBoardState() {
     window.clearTimeout(messageTimer);
     message.classList.remove("visible");
     message.textContent = "";
+}
+
+function clearAllInformation() {
+    fenInput.value = "";
+    fenInput.classList.remove("error");
+    movesInput.value = "";
+    imageInput.value = "";
+    currentFenDisplay.value = "";
+    resetBoardState();
 }
 
 function renderBoard() {
@@ -887,6 +898,7 @@ async function applyImagePosition() {
 }
 
 applyButton.addEventListener("click", applyPosition);
+cancelButton.addEventListener("click", clearAllInformation);
 imageApplyButton.addEventListener("click", applyImagePosition);
 startButton.addEventListener("click", () => {
     if (historyIndex > 0) {

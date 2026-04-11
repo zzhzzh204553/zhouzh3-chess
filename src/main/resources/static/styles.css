@@ -39,6 +39,10 @@ body {
     gap: 10px;
 }
 
+.control-row + .control-row {
+    margin-top: 8px;
+}
+
 .board {
     position: relative;
     width: var(--board-width);

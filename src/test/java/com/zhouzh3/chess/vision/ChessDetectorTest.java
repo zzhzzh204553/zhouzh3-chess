@@ -36,7 +36,7 @@ public class ChessDetectorTest {
 //        String name = "chess/cell_6_6.png";
 //        InputStream resourceAsStream = Objects.requireNonNull(ChessDetector.class.getClassLoader().getResourceAsStream(name));
 //        BufferedImage bufferedImage = ImageIO.read(resourceAsStream);
-//        ChessCell cell = chooser.choose(bufferedImage, 6, 6);
+//        ChessPiece cell = chooser.choose(bufferedImage, 6, 6);
 //        System.out.println(cell);
     }
 

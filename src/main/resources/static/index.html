@@ -17,15 +17,19 @@
             <div class="control-row">
                 <input type="text" id="fenInput" placeholder="输入fen" value="rnbakabnr/9/1c5c1/p1p1p1p1p/9/2P6/P3P1P1P/1C5C1/9/RNBAKABNR">
                 <input type="text" id="movesInput" placeholder="输入走子序列">
-                <button type="button" id="applyButton">应用局面</button>
+                <button type="button" id="applyButton">确定</button>
+                <button type="button" id="cancelButton">清空</button>
             </div>
             <div class="control-row">
                 <input type="file" id="imageInput" accept="image/*">
                 <button type="button" id="imageApplyButton">上传图片</button>
             </div>
-            <label for="currentFenDisplay" class="sub-label"></label>
-            <input type="text" id="currentFenDisplay" readonly style="width: 100%;">
+            <div class="control-row">
+                <!--            <label for="currentFenDisplay" class="sub-label"></label>-->
+                <input type="text" id="currentFenDisplay" readonly style="width: 100%;">
+            </div>
         </section>
+
 
         <section class="panel move-panel">
             <div class="panel-title">棋谱</div>
