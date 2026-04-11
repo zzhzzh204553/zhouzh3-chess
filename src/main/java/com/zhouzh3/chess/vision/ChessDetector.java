@@ -49,13 +49,17 @@ public class ChessDetector {
     public static final RgbColor DESTINATION_COLOR = new RgbColor(237, 220, 200);
 
 
-    private final Map<String, TemplateFeature> pieceTemplates;
     private final boolean[][] circleMask;
+    private final Map<String, TemplateFeature> pieceTemplates;
 
 
     public ChessDetector() throws IOException {
         this.circleMask = createCircleMask();
         this.pieceTemplates = loadPieceTemplates();
+    }
+
+    private boolean isInCircle(int y, int x) {
+        return circleMask[y][x];
     }
 
     private Map<String, TemplateFeature> loadPieceTemplates() throws IOException {
@@ -142,7 +146,7 @@ public class ChessDetector {
         int foregroundCount = 0;
         for (int y = 0; y < ChessConstants.IMAGE_SIZE; y++) {
             for (int x = 0; x < ChessConstants.IMAGE_SIZE; x++) {
-                if (!circleMask[y][x]) {
+                if (!isInCircle(y, x)) {
                     continue;
                 }
                 RgbColor rgbColor = getColor(img, x, y);
@@ -178,14 +182,14 @@ public class ChessDetector {
         int activeCount = 0;
         for (int y = 0; y < ChessConstants.IMAGE_SIZE; y++) {
             for (int x = 0; x < ChessConstants.IMAGE_SIZE; x++) {
-                if (!circleMask[y][x]) {
+                if (!isInCircle(y, x)) {
                     continue;
                 }
                 sb.append(gray[y][x] > avg ? '1' : '0');
                 if (Math.abs(gray[y][x] - avg) >= activeDeltaThreshold) {
                     activeCount++;
                 }
-                if (x > 0 && y > 0 && circleMask[y][x - 1] && circleMask[y - 1][x]) {
+                if (x > 0 && y > 0 && isInCircle(y, x - 1) && isInCircle(y - 1, x)) {
                     edgeSum += Math.abs(gray[y][x] - gray[y][x - 1]);
                     edgeSum += Math.abs(gray[y][x] - gray[y - 1][x]);
                     edgeCount += 2;
@@ -306,7 +310,7 @@ public class ChessDetector {
         int count = 0;
         for (int y = 0; y < ChessConstants.IMAGE_SIZE; y++) {
             for (int x = 0; x < ChessConstants.IMAGE_SIZE; x++) {
-                if (!circleMask[y][x]) {
+                if (!isInCircle(y, x)) {
                     continue;
                 }
                 double source = (metrics.gray()[y][x] - metrics.mean()) / sourceContrast;
