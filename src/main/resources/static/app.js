@@ -56,6 +56,8 @@ const moveList = document.getElementById("moveList");
 const board = document.getElementById("board");
 const message = document.getElementById("message");
 const treeList = document.getElementById("treeList");
+const treeSearchInput = document.getElementById("treeSearchInput");
+
 const collapsedTreeKeys = new Set();
 
 
@@ -74,6 +76,8 @@ let moveHistory = [];
 let pendingMoveAnimation = null;
 let moveAnimationTimer = null;
 let activeTreeKey = "";
+let treeKeyword = "";
+
 
 const defaultFen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 
@@ -1066,6 +1070,42 @@ function toggleTreeBranch(key) {
     renderGameTree();
 }
 
+function filterTreeNodes(nodes, keyword) {
+    if (!keyword) {
+        return nodes;
+    }
+
+    const normalizedKeyword = keyword.toLowerCase();
+    const result = [];
+
+    nodes.forEach(node => {
+        const title = (node.title || "").toLowerCase();
+        const matched = title.includes(normalizedKeyword);
+
+        if (node.children && node.children.length) {
+            const filteredChildren = filterTreeNodes(node.children, keyword);
+            if (matched || filteredChildren.length > 0) {
+                result.push({
+                    ...node,
+                    children: filteredChildren
+                });
+            }
+            return;
+        }
+
+        if (matched) {
+            result.push(node);
+        }
+    });
+
+    return result;
+}
+
+function isTreeSearching() {
+    return Boolean(treeKeyword.trim());
+}
+
+
 function renderTreeNodes(nodes, container, level = 0, path = "") {
     nodes.forEach((node, index) => {
         const key = path ? `${path}-${index}` : String(index);
@@ -1087,8 +1127,22 @@ function renderTreeNodes(nodes, container, level = 0, path = "") {
                    renderTreeNodes(node.children, children, level + 1, key);
                    return;
                }*/
+        /*      if (node.children && node.children.length) {
+                  const collapsed = collapsedTreeKeys.has(key);
+                  item.textContent = `${collapsed ? "▸" : "▾"} ${node.title}`;
+                  item.addEventListener("click", () => toggleTreeBranch(key));
+                  container.appendChild(item);
+
+                  if (!collapsed) {
+                      const children = document.createElement("div");
+                      children.className = "tree-children";
+                      container.appendChild(children);
+                      renderTreeNodes(node.children, children, level + 1, key);
+                  }
+                  return;
+              }*/
         if (node.children && node.children.length) {
-            const collapsed = collapsedTreeKeys.has(key);
+            const collapsed = isTreeSearching() ? false : collapsedTreeKeys.has(key);
             item.textContent = `${collapsed ? "▸" : "▾"} ${node.title}`;
             item.addEventListener("click", () => toggleTreeBranch(key));
             container.appendChild(item);
@@ -1109,14 +1163,27 @@ function renderTreeNodes(nodes, container, level = 0, path = "") {
     });
 }
 
-function renderGameTree() {
+/*function renderGameTree() {
     if (!treeList || !Array.isArray(window.gameTree || gameTree)) {
         return;
     }
 
     treeList.innerHTML = "";
     renderTreeNodes(window.gameTree || gameTree, treeList);
+}*/
+
+function renderGameTree() {
+    if (!treeList || !Array.isArray(window.gameTree || gameTree)) {
+        return;
+    }
+
+    const sourceTree = window.gameTree || gameTree;
+    const filteredTree = filterTreeNodes(sourceTree, treeKeyword.trim());
+
+    treeList.innerHTML = "";
+    renderTreeNodes(filteredTree, treeList);
 }
+
 
 applyButton.addEventListener("click", applyPosition);
 cancelButton.addEventListener("click", clearAllInformation);
@@ -1167,7 +1234,15 @@ board.addEventListener("click", event => {
     moveSelectedPieceTo(row, col);
 });
 
+treeSearchInput.addEventListener("input", event => {
+    treeKeyword = event.target.value || "";
+    renderGameTree();
+});
+
+
 window.addEventListener("resize", () => renderPieces(currentPieces));
+
+
 
 renderBoard();
 renderGameTree();

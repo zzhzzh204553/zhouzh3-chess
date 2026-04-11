@@ -486,3 +486,7 @@ label {
     padding-left: 10px;
 }
 
+#treeSearchInput {
+    width: 100%;
+    margin-bottom: 10px;
+}
