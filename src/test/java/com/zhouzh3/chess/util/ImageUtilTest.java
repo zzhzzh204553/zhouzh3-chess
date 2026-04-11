@@ -2,7 +2,7 @@ package com.zhouzh3.chess.util;
 
 import com.zhouzh3.chess.fen.Board;
 import com.zhouzh3.chess.model.CropParam;
-import com.zhouzh3.chess.vision.ChessDetector;
+import com.zhouzh3.chess.vision.PieceDetector;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -17,7 +17,7 @@ public class ImageUtilTest {
 
         ImageUtil.getCrossingColor(inputFile, cropParam);
 
-//        ChessDetector chessDetector = new ChessDetector();
+//        PieceDetector chessDetector = new PieceDetector();
 //        chessDetector.detectChessPieces(inputFile, cropParam);
     }
 
@@ -26,8 +26,8 @@ public class ImageUtilTest {
         File inputFile = new File("D:\\git.codex\\zhouzh3-chess\\src\\main\\resources\\images\\9.png");
         CropParam cropParam = ImageUtil.cropPiecesNew();
 
-        ChessDetector chessDetector = new ChessDetector();
-        Board board = chessDetector.detectChessPieces(inputFile, cropParam);
+        PieceDetector pieceDetector = new PieceDetector();
+        Board board = pieceDetector.detectChessPieces(inputFile, cropParam);
         System.out.println(board.toFen());
     }
 

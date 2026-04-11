@@ -1,11 +1,7 @@
 package com.zhouzh3.chess.vision;
 
 import com.zhouzh3.chess.fen.Board;
-import com.zhouzh3.chess.model.CropParam;
-import com.zhouzh3.chess.util.ImageUtil;
-import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -29,12 +25,12 @@ public class ChessDetectorTest {
 
     public static void main(String[] args) throws IOException {
 
-        ChessDetector chessDetector = new ChessDetector();
-        Board board = chessDetector.ocrBoard(INPUT_IMAGES);
+        PieceDetector pieceDetector = new PieceDetector();
+        Board board = pieceDetector.ocrBoard(INPUT_IMAGES);
         System.out.println(board.toFen());
 
 //        String name = "chess/cell_6_6.png";
-//        InputStream resourceAsStream = Objects.requireNonNull(ChessDetector.class.getClassLoader().getResourceAsStream(name));
+//        InputStream resourceAsStream = Objects.requireNonNull(PieceDetector.class.getClassLoader().getResourceAsStream(name));
 //        BufferedImage bufferedImage = ImageIO.read(resourceAsStream);
 //        ChessPiece cell = chooser.choose(bufferedImage, 6, 6);
 //        System.out.println(cell);
@@ -49,7 +45,7 @@ public class ChessDetectorTest {
 //        CropParam cropParam = ImageUtil.cropPiecesNew();
 //
 //
-//        ChessDetector chessDetector = new ChessDetector();
+//        PieceDetector chessDetector = new PieceDetector();
 //        Board board = chessDetector.detectChessPieces(inputFile, cropParam);
 //        System.out.println(board.toFen());
 //    }

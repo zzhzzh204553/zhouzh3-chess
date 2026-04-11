@@ -34,7 +34,7 @@ import static com.zhouzh3.chess.util.ImageUtil.getSubimage;
  */
 @Slf4j
 @Service
-public class ChessDetector {
+public class PieceDetector {
     private static final String TEMPLATE_PATH_SEPARATOR = "\\|";
     private static final double RED_DOMINANCE_RATIO = 2.00d;
     private static final long RED_DOMINANCE_DELTA = 80000L;
@@ -54,7 +54,7 @@ public class ChessDetector {
     private final Map<String, TemplateFeature> pieceTemplates;
 
 
-    public ChessDetector() throws IOException {
+    public PieceDetector() throws IOException {
         this.circleMask = createCircleMask();
         this.pieceTemplates = loadPieceTemplates();
     }

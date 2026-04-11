@@ -473,6 +473,7 @@ label {
 
 .tree-node.leaf {
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .tree-node.active {
@@ -486,7 +487,39 @@ label {
     padding-left: 10px;
 }
 
+.tree-node mark {
+    background: #ffd54f;
+    color: #8b2e1e;
+    padding: 0 2px;
+    border-radius: 3px;
+}
+
+
 #treeSearchInput {
     width: 100%;
     margin-bottom: 10px;
+}
+
+
+.tree-tooltip {
+    position: fixed;
+    left: 0;
+    top: 0;
+    max-width: 320px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(50, 30, 18, 0.96);
+    color: #fff7e8;
+    font-size: 16px;
+    line-height: 1.4;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    white-space: normal;
+}
+
+.tree-tooltip.visible {
+    opacity: 1;
 }

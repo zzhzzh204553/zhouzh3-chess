@@ -3,7 +3,7 @@ package com.zhouzh3.chess.web;
 import com.zhouzh3.chess.fen.Board;
 import com.zhouzh3.chess.model.CropParam;
 import com.zhouzh3.chess.util.ImageUtil;
-import com.zhouzh3.chess.vision.ChessDetector;
+import com.zhouzh3.chess.vision.PieceDetector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -28,7 +28,7 @@ import java.util.Map;
 public class ChessDetectorController {
 
     @Autowired
-    private ChessDetector chessDetector;
+    private PieceDetector pieceDetector;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, path = "detect")
     public Map<String, String> detectChessPieces(@RequestParam("file") MultipartFile file) throws Exception {
@@ -38,7 +38,7 @@ public class ChessDetectorController {
             file.transferTo(screenshot);
 
             CropParam cropParam = ImageUtil.cropPiecesNew();
-            Board board = chessDetector.detectChessPieces(screenshot.toFile(), cropParam);
+            Board board = pieceDetector.detectChessPieces(screenshot.toFile(), cropParam);
 //            ImageFenService imageFenService = new ImageFenService();
 //            String fen = imageFenService.parseImageFen(screenshot, true);
             return Map.of("fen", board.toFen());
