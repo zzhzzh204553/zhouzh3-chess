@@ -8,6 +8,13 @@
 </head>
 <body>
 <div class="app-shell">
+    <aside class="tree-sidebar">
+        <section class="panel tree-panel">
+            <div class="panel-title">棋谱树</div>
+            <div class="tree-list" id="treeList"></div>
+        </section>
+    </aside>
+
     <div class="board-panel">
         <div class="board" id="board"></div>
     </div>
@@ -15,8 +22,8 @@
     <aside class="sidebar">
         <section class="panel">
             <div class="control-row">
-                <input type="text" id="fenInput" placeholder="输入fen" value="rnbakabnr/9/1c5c1/p1p1p1p1p/9/2P6/P3P1P1P/1C5C1/9/RNBAKABNR">
-                <input type="text" id="movesInput" placeholder="输入走子序列">
+                <input type="text" id="fenInput" placeholder="fen" value="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w">
+                <input type="text" id="movesInput" placeholder="棋谱">
                 <button type="button" id="applyButton">确定</button>
                 <button type="button" id="cancelButton">清空</button>
             </div>
@@ -32,7 +39,7 @@
 
 
         <section class="panel move-panel">
-            <div class="panel-title">棋谱</div>
+            <!--            <div class="panel-title">棋谱</div>-->
             <div class="move-list" id="moveList"></div>
             <div class="history-controls">
                 <button type="button" id="startButton">开局</button>
@@ -46,6 +53,7 @@
 </div>
 
 <script src="rules.js"></script>
+<script src="game-tree.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

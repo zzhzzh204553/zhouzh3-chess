@@ -55,6 +55,9 @@ const endButton = document.getElementById("endButton");
 const moveList = document.getElementById("moveList");
 const board = document.getElementById("board");
 const message = document.getElementById("message");
+const treeList = document.getElementById("treeList");
+const collapsedTreeKeys = new Set();
+
 
 let currentPieces = [];
 let currentFenSuffix = "";
@@ -68,6 +71,11 @@ let audioContext = null;
 let historySnapshots = [];
 let historyIndex = 0;
 let moveHistory = [];
+let pendingMoveAnimation = null;
+let moveAnimationTimer = null;
+let activeTreeKey = "";
+
+const defaultFen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 
 const chineseFiles = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
 const pieceLabels = {
@@ -201,6 +209,12 @@ function syncFenInput() {
     fenInput.value = originalFenInput;
 }
 
+function getFenInputValue() {
+    const fen = fenInput.value.trim() || defaultFen;
+    fenInput.value = fen;
+    return fen;
+}
+
 function syncCurrentFenDisplay() {
     currentFenDisplay.value = piecesToFen(currentPieces, currentFenSuffix);
 }
@@ -273,7 +287,7 @@ function applyMoveToState(state, moveText, stepNumber) {
         current !== piece && current.row === to.row && current.col === to.col
     );
 
-    state.lastMove = { from, to };
+    state.lastMove = {from, to};
     state.pieces = state.pieces.filter(current =>
         current === piece || current.row !== to.row || current.col !== to.col
     );
@@ -294,7 +308,7 @@ function applyMoveToState(state, moveText, stepNumber) {
 }
 
 function parseMoveSequence() {
-    const fenResult = parseFen(fenInput.value.trim());
+    const fenResult = parseFen(getFenInputValue());
     if (fenResult.error) {
         fenInput.classList.add("error");
         throw new Error(fenResult.error);
@@ -425,6 +439,7 @@ function restoreHistoryStep(step) {
         return;
     }
 
+    pendingMoveAnimation = buildAnimationFromHistoryStep(step);
     historyIndex = step;
     currentPieces = clonePieces(snapshot.pieces);
     currentSide = snapshot.side;
@@ -497,6 +512,66 @@ function getBoardMetrics() {
     };
 }
 
+function getBoardPoint(metrics, row, col) {
+    return {
+        x: metrics.startX + col * metrics.stepX + 1,
+        y: metrics.startY + row * metrics.stepY
+    };
+}
+
+function clearMoveAnimation() {
+    pendingMoveAnimation = null;
+    window.clearTimeout(moveAnimationTimer);
+    board.querySelectorAll(".piece.move-animation, .piece.capture-animation, .landing-pulse")
+        .forEach(element => element.remove());
+    board.querySelectorAll(".piece.animation-hidden")
+        .forEach(element => element.classList.remove("animation-hidden"));
+}
+
+function buildMoveAnimation(code, captureCode, from, to) {
+    if (!code || !from || !to) {
+        return null;
+    }
+
+    return {
+        code,
+        captureCode: captureCode || null,
+        from: {...from},
+        to: {...to}
+    };
+}
+
+function buildAnimationFromHistoryStep(step) {
+    if (step <= 0) {
+        return null;
+    }
+
+    const snapshot = historySnapshots[step];
+    const previousSnapshot = historySnapshots[step - 1];
+    const move = snapshot?.lastMove;
+    if (!previousSnapshot || !move) {
+        return null;
+    }
+
+    const movingPiece = previousSnapshot.pieces.find(piece =>
+        piece.row === move.from.row && piece.col === move.from.col
+    );
+    if (!movingPiece) {
+        return null;
+    }
+
+    const capturedPiece = previousSnapshot.pieces.find(piece =>
+        piece.row === move.to.row && piece.col === move.to.col
+    );
+
+    return buildMoveAnimation(
+        movingPiece.code,
+        capturedPiece ? capturedPiece.code : null,
+        move.from,
+        move.to
+    );
+}
+
 function createMoveMarker(type, x, y) {
     const marker = document.createElement("div");
     marker.className = `move-marker ${type}`;
@@ -530,14 +605,14 @@ function getAudioContext() {
 }
 
 function playTone({
-    frequency,
-    duration,
-    type = "sine",
-    volume = 0.05,
-    delay = 0,
-    attack = Math.min(0.01, duration * 0.25),
-    decay = Math.max(duration - Math.min(0.01, duration * 0.25), 0.01)
-}) {
+                      frequency,
+                      duration,
+                      type = "sine",
+                      volume = 0.05,
+                      delay = 0,
+                      attack = Math.min(0.01, duration * 0.25),
+                      decay = Math.max(duration - Math.min(0.01, duration * 0.25), 0.01)
+                  }) {
     const context = getAudioContext();
     if (!context) {
         return;
@@ -674,6 +749,66 @@ function renderLegalMoves(metrics) {
     });
 }
 
+function shouldHidePieceForAnimation(piece) {
+    return pendingMoveAnimation
+        && piece.code === pendingMoveAnimation.code
+        && piece.row === pendingMoveAnimation.to.row
+        && piece.col === pendingMoveAnimation.to.col;
+}
+
+function renderMoveAnimation(metrics) {
+    if (!pendingMoveAnimation) {
+        return;
+    }
+
+    window.clearTimeout(moveAnimationTimer);
+    const animation = pendingMoveAnimation;
+    const fromPoint = getBoardPoint(metrics, animation.from.row, animation.from.col);
+    const toPoint = getBoardPoint(metrics, animation.to.row, animation.to.col);
+
+    if (animation.captureCode) {
+        const capturedPiece = document.createElement("img");
+        capturedPiece.className = "piece capture-animation";
+        capturedPiece.src = pieceImages[animation.captureCode];
+        capturedPiece.alt = pieceNames[animation.captureCode];
+        capturedPiece.style.left = `${toPoint.x}px`;
+        capturedPiece.style.top = `${toPoint.y}px`;
+        board.appendChild(capturedPiece);
+    }
+
+    const movingPiece = document.createElement("img");
+    movingPiece.className = "piece move-animation";
+    movingPiece.src = pieceImages[animation.code];
+    movingPiece.alt = pieceNames[animation.code];
+    movingPiece.style.left = `${fromPoint.x}px`;
+    movingPiece.style.top = `${fromPoint.y}px`;
+    board.appendChild(movingPiece);
+
+    const landingPulse = document.createElement("div");
+    landingPulse.className = "landing-pulse";
+    landingPulse.style.left = `${toPoint.x}px`;
+    landingPulse.style.top = `${toPoint.y}px`;
+    board.appendChild(landingPulse);
+
+    window.requestAnimationFrame(() => {
+        movingPiece.classList.add("primed");
+        window.setTimeout(() => {
+            movingPiece.style.left = `${toPoint.x}px`;
+            movingPiece.style.top = `${toPoint.y}px`;
+            movingPiece.classList.add("moving");
+        },/*移动过渡*/ 200);
+    });
+
+    moveAnimationTimer = window.setTimeout(() => {
+        pendingMoveAnimation = null;
+        movingPiece.remove();
+        landingPulse.remove();
+        board.querySelectorAll(".piece.capture-animation").forEach(element => element.remove());
+        board.querySelectorAll(".piece.animation-hidden")
+            .forEach(element => element.classList.remove("animation-hidden"));
+    }, 560);
+}
+
 function renderPieces(pieces) {
     const metrics = getBoardMetrics();
     board.innerHTML = "";
@@ -685,6 +820,9 @@ function renderPieces(pieces) {
         img.className = "piece";
         if (piece === selectedPiece) {
             img.classList.add("selected");
+        }
+        if (shouldHidePieceForAnimation(piece)) {
+            img.classList.add("animation-hidden");
         }
         img.src = pieceImages[piece.code];
         img.alt = pieceNames[piece.code];
@@ -728,6 +866,8 @@ function renderPieces(pieces) {
         });
         board.appendChild(img);
     });
+
+    renderMoveAnimation(metrics);
 }
 
 function piecesToFen(pieces, suffix = "") {
@@ -776,13 +916,20 @@ function moveSelectedPieceTo(row, col) {
 
     const movingPieceCode = selectedPiece.code;
     const notation = generateMoveNotation(selectedPiece, from, to);
+    const capturedPiece = currentPieces.find(piece =>
+        piece !== selectedPiece && piece.row === row && piece.col === col
+    );
 
     lastMove = {
         from,
         to
     };
-    const isCapture = currentPieces.some(piece =>
-        piece !== selectedPiece && piece.row === row && piece.col === col
+    const isCapture = Boolean(capturedPiece);
+    pendingMoveAnimation = buildMoveAnimation(
+        movingPieceCode,
+        capturedPiece ? capturedPiece.code : null,
+        from,
+        to
     );
     currentPieces = currentPieces.filter(piece =>
         piece === selectedPiece || piece.row !== row || piece.col !== col
@@ -808,6 +955,7 @@ function moveSelectedPieceTo(row, col) {
 }
 
 function resetBoardState() {
+    clearMoveAnimation();
     currentPieces = [];
     currentFenSuffix = "";
     originalFenInput = "";
@@ -836,7 +984,7 @@ function clearAllInformation() {
 }
 
 function renderBoard() {
-    const fen = fenInput.value.trim();
+    const fen = getFenInputValue();
     resetBoardState();
     const result = parseFen(fen);
 
@@ -897,6 +1045,79 @@ async function applyImagePosition() {
     }
 }
 
+function isLeafNode(node) {
+    return node && typeof node.fen === "string" && typeof node.moves === "string";
+}
+
+function loadTreeLeaf(node, key) {
+    fenInput.value = node.fen || "";
+    movesInput.value = node.moves || "";
+    activeTreeKey = key;
+    renderGameTree();
+    applyPosition();
+}
+
+function toggleTreeBranch(key) {
+    if (collapsedTreeKeys.has(key)) {
+        collapsedTreeKeys.delete(key);
+    } else {
+        collapsedTreeKeys.add(key);
+    }
+    renderGameTree();
+}
+
+function renderTreeNodes(nodes, container, level = 0, path = "") {
+    nodes.forEach((node, index) => {
+        const key = path ? `${path}-${index}` : String(index);
+        const item = document.createElement("div");
+        item.className = `tree-node ${node.children ? "branch" : "leaf"}`;
+        item.style.paddingLeft = `${10 + level * 14}px`;
+
+        if (activeTreeKey === key) {
+            item.classList.add("active");
+        }
+
+        /*       if (node.children && node.children.length) {
+                   item.textContent = `▾ ${node.title}`;
+                   container.appendChild(item);
+
+                   const children = document.createElement("div");
+                   children.className = "tree-children";
+                   container.appendChild(children);
+                   renderTreeNodes(node.children, children, level + 1, key);
+                   return;
+               }*/
+        if (node.children && node.children.length) {
+            const collapsed = collapsedTreeKeys.has(key);
+            item.textContent = `${collapsed ? "▸" : "▾"} ${node.title}`;
+            item.addEventListener("click", () => toggleTreeBranch(key));
+            container.appendChild(item);
+
+            if (!collapsed) {
+                const children = document.createElement("div");
+                children.className = "tree-children";
+                container.appendChild(children);
+                renderTreeNodes(node.children, children, level + 1, key);
+            }
+            return;
+        }
+
+
+        item.textContent = `· ${node.title}`;
+        item.addEventListener("click", () => loadTreeLeaf(node, key));
+        container.appendChild(item);
+    });
+}
+
+function renderGameTree() {
+    if (!treeList || !Array.isArray(window.gameTree || gameTree)) {
+        return;
+    }
+
+    treeList.innerHTML = "";
+    renderTreeNodes(window.gameTree || gameTree, treeList);
+}
+
 applyButton.addEventListener("click", applyPosition);
 cancelButton.addEventListener("click", clearAllInformation);
 imageApplyButton.addEventListener("click", applyImagePosition);
@@ -949,3 +1170,4 @@ board.addEventListener("click", event => {
 window.addEventListener("resize", () => renderPieces(currentPieces));
 
 renderBoard();
+renderGameTree();

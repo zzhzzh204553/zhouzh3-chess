@@ -1,6 +1,6 @@
 package com.zhouzh3.chess.fen;
 
-import com.zhouzh3.chess.eval.XiangqiEvaluator;
+import com.zhouzh3.chess.eval.ChessEvaluator;
 
 public class FenMain {
     public static void main(String[] args) {
@@ -51,7 +51,7 @@ public class FenMain {
         };
 
 
-        XiangqiEvaluator evaluator = new XiangqiEvaluator();
+        ChessEvaluator evaluator = new ChessEvaluator();
 
         // 每两步为一个回合
         for (int i = 0; i < moves.length; i += 2) {

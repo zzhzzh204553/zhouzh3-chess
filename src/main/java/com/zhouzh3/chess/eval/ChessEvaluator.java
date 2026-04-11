@@ -2,7 +2,7 @@ package com.zhouzh3.chess.eval;
 
 import java.util.List;
 
-public final class XiangqiEvaluator {
+public final class ChessEvaluator {
 
     private final FenParser fenParser = new FenParser();
 
