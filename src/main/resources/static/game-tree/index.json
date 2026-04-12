@@ -7,6 +7,10 @@
         "source": "game-tree/中炮局/中炮两头蛇对左三步虎.json"
       },
       {
+        "title": "中炮右横车对反宫马",
+        "source": "game-tree/中炮局/中炮右横车对反宫马.json"
+      },
+      {
         "title": "中炮右横车对左三步虎",
         "source": "game-tree/中炮局/中炮右横车对左三步虎.json"
       },
@@ -17,6 +21,14 @@
       {
         "title": "中炮对单提马横车",
         "source": "game-tree/中炮局/中炮对单提马横车.json"
+      },
+      {
+        "title": "中炮对反宫马",
+        "source": "game-tree/中炮局/中炮对反宫马.json"
+      },
+      {
+        "title": "中炮对反宫马后补左马",
+        "source": "game-tree/中炮局/中炮对反宫马后补左马.json"
       },
       {
         "title": "中炮对右三步虎",
@@ -55,16 +67,32 @@
         "source": "game-tree/中炮局/中炮对龟背炮.json"
       },
       {
+        "title": "中炮巡河炮对反宫马",
+        "source": "game-tree/中炮局/中炮巡河炮对反宫马.json"
+      },
+      {
         "title": "中炮巡河炮对左三步虎",
         "source": "game-tree/中炮局/中炮巡河炮对左三步虎.json"
+      },
+      {
+        "title": "中炮急进左马对反宫马",
+        "source": "game-tree/中炮局/中炮急进左马对反宫马.json"
       },
       {
         "title": "中炮过河炮对左三步虎",
         "source": "game-tree/中炮局/中炮过河炮对左三步虎.json"
       },
       {
+        "title": "中炮过河车对反宫马",
+        "source": "game-tree/中炮局/中炮过河车对反宫马.json"
+      },
+      {
         "title": "中炮进七兵对单提马横车",
         "source": "game-tree/中炮局/中炮进七兵对单提马横车.json"
+      },
+      {
+        "title": "五八炮对反宫马",
+        "source": "game-tree/中炮局/五八炮对反宫马.json"
       }
     ]
   }

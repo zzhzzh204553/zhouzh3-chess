@@ -1,12 +1,10 @@
 package com.zhouzh3.chess.notation;
 
-import cn.hutool.core.io.FileUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +14,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -24,8 +21,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class ChessParser {
-
-    private static final String DEFAULT_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 
     private final ObjectMapper mapper;
 
@@ -56,15 +51,18 @@ public class ChessParser {
                 "中炮局/中炮对左三步虎.json",
                 "中炮局/中炮右横车对左三步虎.json",
                 "中炮局/中炮巡河炮对左三步虎.json",
-                "中炮局/中炮过河炮对左三步虎.json"
-//                "中炮局/中炮两头蛇对左三步虎.json",
+                "中炮局/中炮过河炮对左三步虎.json",
+                "中炮局/中炮两头蛇对左三步虎.json",
+                "中炮局/中炮对反宫马后补左马.json",
+                "中炮局/中炮对反宫马.json",
+                "中炮局/中炮急进左马对反宫马.json",
+                "中炮局/中炮过河车对反宫马.json"
+
         );
 
         String parent = "D:\\git.python\\chess_spider\\棋谱";
         for (String jsonFile : jsonFiles) {
             List<ChessLeaf> chessLeaves = chessParser.parseJsonFile(new File(parent, jsonFile));
-//            String prefix = FileUtil.getPrefix(jsonFile);
-//            String title = prefix.replace("-", "/");
             System.out.println("jsonFile = " + jsonFile);
             chessParser.output(jsonFile, chessLeaves);
         }
@@ -97,57 +95,6 @@ public class ChessParser {
         Files.createDirectories(tempFile.getParent());
         Files.writeString(tempFile, output);
         System.out.println(tempFile.toUri().toURL());
-    }
-
-    @NonNull
-    private List<ChessLeaf> parseTextDir(Path start) throws IOException {
-        return Files.walk(start)
-                .filter(Files::isRegularFile)
-                .filter(path -> path.toString().endsWith(".txt"))
-                .map(path -> {
-                    try {
-                        return processTextFile(path.toFile());
-                    } catch (IOException e) {
-                        log.error("Error processing file: {}", path, e);
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private static ChessLeaf processTextFile(File file) throws IOException {
-        List<String> lines = Files.readAllLines(file.toPath());
-
-        String title = null;
-        String fen = null;
-        String moves = null;
-
-        for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i).trim();
-            if (i == 1) {
-                title = FileUtil.getPrefix(file.getName()).trim();
-            } else if (line.startsWith("==== 初始布局 ====")) {
-                if (i + 1 < lines.size()) {
-                    fen = lines.get(i + 1).trim();
-                    if ("#".equals(fen)) {
-                        fen = DEFAULT_FEN;
-                    }
-                }
-            } else if (line.startsWith("==== 棋谱走法 ====")) {
-                if (i + 1 < lines.size()) {
-                    moves = lines.get(i + 1).trim();
-                    if (moves.startsWith("#")) {
-                        moves = moves.substring(2).trim();
-                    }
-                }
-            }
-        }
-
-        if (title != null && fen != null && moves != null) {
-            return new ChessLeaf(title, fen, moves);
-        }
-        return null;
     }
 
     private String toJson(ChessLeaf chessLeaf) {
