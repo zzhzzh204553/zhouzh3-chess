@@ -437,7 +437,7 @@ label {
 }
 
 .tree-sidebar {
-    width: min(280px, 100%);
+    width: min(320px, 100%);
     display: flex;
     flex-direction: column;
 }

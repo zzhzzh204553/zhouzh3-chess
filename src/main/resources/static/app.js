@@ -78,6 +78,7 @@ let moveAnimationTimer = null;
 let activeTreeKey = "";
 let treeKeyword = "";
 let treeTooltipEl = null;
+let gameTree = [];
 
 
 const defaultFen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
@@ -1101,7 +1102,47 @@ async function applyImagePosition() {
 }
 
 function isLeafNode(node) {
-    return node && typeof node.fen === "string" && typeof node.moves === "string";
+    return node && typeof node.moves === "string";
+}
+
+function isLazyBranchNode(node) {
+    return node && typeof node.source === "string" && !isLeafNode(node);
+}
+
+function isBranchNode(node) {
+    return node && (Array.isArray(node.children) || isLazyBranchNode(node));
+}
+
+async function loadGameTreeIndex() {
+    const response = await fetch("game-tree/index.json");
+    if (!response.ok) {
+        throw new Error("加载棋谱目录失败");
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+        throw new Error("棋谱目录格式不正确");
+    }
+
+    gameTree = data;
+}
+
+async function ensureTreeBranchLoaded(node) {
+    if (!isLazyBranchNode(node) || Array.isArray(node.children)) {
+        return;
+    }
+
+    const response = await fetch(node.source);
+    if (!response.ok) {
+        throw new Error("加载棋谱分支失败");
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+        throw new Error("棋谱分支格式不正确");
+    }
+
+    node.children = data;
 }
 
 function loadTreeLeaf(node, key) {
@@ -1112,13 +1153,22 @@ function loadTreeLeaf(node, key) {
     applyPosition();
 }
 
-function toggleTreeBranch(key) {
-    if (collapsedTreeKeys.has(key)) {
-        collapsedTreeKeys.delete(key);
-    } else {
-        collapsedTreeKeys.add(key);
+async function toggleTreeBranch(node, key) {
+    try {
+        const needsInitialLoad = isLazyBranchNode(node) && !Array.isArray(node.children);
+        await ensureTreeBranchLoaded(node);
+
+        if (needsInitialLoad) {
+            collapsedTreeKeys.delete(key);
+        } else if (collapsedTreeKeys.has(key)) {
+            collapsedTreeKeys.delete(key);
+        } else {
+            collapsedTreeKeys.add(key);
+        }
+        renderGameTree();
+    } catch (error) {
+        showMessage(error.message || "展开棋谱失败");
     }
-    renderGameTree();
 }
 
 function filterTreeNodes(nodes, keyword) {
@@ -1133,7 +1183,7 @@ function filterTreeNodes(nodes, keyword) {
         const title = (node.title || "").toLowerCase();
         const matched = title.includes(normalizedKeyword);
 
-        if (node.children && node.children.length) {
+        if (Array.isArray(node.children) && node.children.length) {
             const filteredChildren = filterTreeNodes(node.children, keyword);
             if (matched || filteredChildren.length > 0) {
                 result.push({
@@ -1156,25 +1206,57 @@ function isTreeSearching() {
     return Boolean(treeKeyword.trim());
 }
 
+
+function to_roman_num(index) {
+    const map = {M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1};
+    let result = "";
+    let value = index; // 使用副本，不修改原始 index
+    for (let key in map) {
+        while (value >= map[key]) {
+            result += key;
+            value -= map[key];
+        }
+    }
+    return result;
+}
+
+function toChineseNum(index) {
+    const digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+    if (index < 10) {
+        return digits[index];
+    } else if (index < 100) {
+        const tens = Math.floor(index / 10);
+        const ones = index % 10;
+        return digits[tens] + digits[ones];
+    } else {
+        throw new Error("只支持到 99");
+    }
+}
+
+function toExcelColumn(num) {
+    if (num < 1 || num > 99) {
+        throw new Error("Number must be between 1 and 99");
+    }
+
+    let result = "";
+    while (num > 0) {
+        // Excel 列号是 1-based，所以要减 1
+        num--;
+        result = String.fromCharCode(65 + (num % 26)) + result;
+        num = Math.floor(num / 26);
+    }
+    return result;
+}
+
 function getNodeLabel(level, index) {
     if (level === 0) {
-        const chineseNums = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
-        return chineseNums[index]; // 第一层：中文数字
+        return toChineseNum(index);
     }
-
     if (level === 1) {
-        const map = {M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1};
-        let result = "";
-        for (let key in map) {
-            while (index >= map[key]) {
-                result += key;
-                index -= map[key];
-            }
-        }
-        return result;
+        return toExcelColumn(index);
     }
 
-    return ""
+    return index
 }
 
 
@@ -1182,20 +1264,22 @@ function renderTreeNodes(nodes, container, level = 0, path = "") {
     nodes.forEach((node, index) => {
         const key = path ? `${path}-${index}` : String(index);
         const item = document.createElement("div");
-        item.className = `tree-node ${node.children ? "branch" : "leaf"}`;
+        item.className = `tree-node ${isBranchNode(node) ? "branch" : "leaf"}`;
         item.style.paddingLeft = `${10 + level * 14}px`;
 
         if (activeTreeKey === key) {
             item.classList.add("active");
         }
 
-        if (node.children && node.children.length) {
-            const collapsed = isTreeSearching() ? false : collapsedTreeKeys.has(key);
+        if (isBranchNode(node)) {
+            const collapsed = isTreeSearching()
+                ? false
+                : ((isLazyBranchNode(node) && !Array.isArray(node.children)) || collapsedTreeKeys.has(key));
             item.textContent = `${collapsed ? "▸" : "▾"} ${getNodeLabel(level, index + 1)}.${node.title}`;
-            item.addEventListener("click", () => toggleTreeBranch(key));
+            item.addEventListener("click", () => toggleTreeBranch(node, key));
             container.appendChild(item);
 
-            if (!collapsed) {
+            if (!collapsed && Array.isArray(node.children) && node.children.length) {
                 const children = document.createElement("div");
                 children.className = "tree-children";
                 container.appendChild(children);
@@ -1229,12 +1313,11 @@ function renderTreeNodes(nodes, container, level = 0, path = "") {
 }*/
 
 function renderGameTree() {
-    if (!treeList || !Array.isArray(window.gameTree || gameTree)) {
+    if (!treeList || !Array.isArray(gameTree)) {
         return;
     }
 
-    const sourceTree = window.gameTree || gameTree;
-    const filteredTree = filterTreeNodes(sourceTree, treeKeyword.trim());
+    const filteredTree = filterTreeNodes(gameTree, treeKeyword.trim());
 
     treeList.innerHTML = "";
     renderTreeNodes(filteredTree, treeList);
@@ -1274,30 +1357,59 @@ function hideTreeTooltip() {
     treeTooltipEl.classList.remove("visible");
 }
 
+function goToStart() {
+    if (historyIndex > 0) {
+        restoreHistoryStep(0);
+    }
+}
+
+function goBack() {
+    if (historyIndex > 0) {
+        restoreHistoryStep(historyIndex - 1);
+    }
+}
+
+function goForward() {
+    if (historyIndex < historySnapshots.length - 1) {
+        restoreHistoryStep(historyIndex + 1);
+    }
+}
+
+function goToEnd() {
+    if (historyIndex < historySnapshots.length - 1) {
+        restoreHistoryStep(historySnapshots.length - 1);
+    }
+}
+
+function handleHistoryShortcut(event) {
+    if (!event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+    }
+
+    const shortcutHandlers = {
+        Home: goToStart,
+        ArrowLeft: goBack,
+        ArrowRight: goForward,
+        End: goToEnd
+    };
+    const handler = shortcutHandlers[event.key];
+    if (!handler) {
+        return;
+    }
+
+    event.preventDefault();
+    handler();
+}
+
 
 applyButton.addEventListener("click", applyPosition);
 cancelButton.addEventListener("click", clearAllInformation);
 imageApplyButton.addEventListener("click", applyImagePosition);
-startButton.addEventListener("click", () => {
-    if (historyIndex > 0) {
-        restoreHistoryStep(0);
-    }
-});
-undoButton.addEventListener("click", () => {
-    if (historyIndex > 0) {
-        restoreHistoryStep(historyIndex - 1);
-    }
-});
-redoButton.addEventListener("click", () => {
-    if (historyIndex < historySnapshots.length - 1) {
-        restoreHistoryStep(historyIndex + 1);
-    }
-});
-endButton.addEventListener("click", () => {
-    if (historyIndex < historySnapshots.length - 1) {
-        restoreHistoryStep(historySnapshots.length - 1);
-    }
-});
+startButton.addEventListener("click", goToStart);
+undoButton.addEventListener("click", goBack);
+redoButton.addEventListener("click", goForward);
+endButton.addEventListener("click", goToEnd);
+document.addEventListener("keydown", handleHistoryShortcut);
 fenInput.addEventListener("keydown", event => {
     if (event.key === "Enter") {
         applyPosition();
@@ -1334,4 +1446,6 @@ window.addEventListener("resize", () => renderPieces(currentPieces));
 
 
 renderBoard();
-renderGameTree();
+loadGameTreeIndex()
+    .then(() => renderGameTree())
+    .catch(error => showMessage(error.message || "棋谱加载失败"));

@@ -1,0 +1,19 @@
+[
+  {
+    "title": "中炮局",
+    "children": [
+      {
+        "title": "中炮对单提马",
+        "source": "game-tree/中炮局/中炮对单提马.json"
+      },
+      {
+        "title": "中炮对单提马横车",
+        "source": "game-tree/中炮局/中炮对单提马横车.json"
+      },
+      {
+        "title": "中炮对龟背炮",
+        "source": "game-tree/中炮局/中炮对龟背炮.json"
+      }
+    ]
+  }
+]

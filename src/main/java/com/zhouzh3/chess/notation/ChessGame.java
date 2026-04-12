@@ -54,4 +54,5 @@ public class ChessGame {
     private String uid;
     private String name;
     private String fen2;
+    private String url;
 }

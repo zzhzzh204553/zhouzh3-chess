@@ -1,0 +1,71 @@
+[
+  {
+    "title": "中炮局",
+    "children": [
+      {
+        "title": "中炮两头蛇对左三步虎",
+        "source": "game-tree/中炮局/中炮两头蛇对左三步虎.json"
+      },
+      {
+        "title": "中炮右横车对左三步虎",
+        "source": "game-tree/中炮局/中炮右横车对左三步虎.json"
+      },
+      {
+        "title": "中炮对单提马",
+        "source": "game-tree/中炮局/中炮对单提马.json"
+      },
+      {
+        "title": "中炮对单提马横车",
+        "source": "game-tree/中炮局/中炮对单提马横车.json"
+      },
+      {
+        "title": "中炮对右三步虎",
+        "source": "game-tree/中炮局/中炮对右三步虎.json"
+      },
+      {
+        "title": "中炮对士角炮转单提马",
+        "source": "game-tree/中炮局/中炮对士角炮转单提马.json"
+      },
+      {
+        "title": "中炮对左三步虎",
+        "source": "game-tree/中炮局/中炮对左三步虎.json"
+      },
+      {
+        "title": "中炮对左炮封车",
+        "source": "game-tree/中炮局/中炮对左炮封车.json"
+      },
+      {
+        "title": "中炮对进右马",
+        "source": "game-tree/中炮局/中炮对进右马.json"
+      },
+      {
+        "title": "中炮对进右马先上士",
+        "source": "game-tree/中炮局/中炮对进右马先上士.json"
+      },
+      {
+        "title": "中炮对进左马",
+        "source": "game-tree/中炮局/中炮对进左马.json"
+      },
+      {
+        "title": "中炮对鸳鸯炮",
+        "source": "game-tree/中炮局/中炮对鸳鸯炮.json"
+      },
+      {
+        "title": "中炮对龟背炮",
+        "source": "game-tree/中炮局/中炮对龟背炮.json"
+      },
+      {
+        "title": "中炮巡河炮对左三步虎",
+        "source": "game-tree/中炮局/中炮巡河炮对左三步虎.json"
+      },
+      {
+        "title": "中炮过河炮对左三步虎",
+        "source": "game-tree/中炮局/中炮过河炮对左三步虎.json"
+      },
+      {
+        "title": "中炮进七兵对单提马横车",
+        "source": "game-tree/中炮局/中炮进七兵对单提马横车.json"
+      }
+    ]
+  }
+]
