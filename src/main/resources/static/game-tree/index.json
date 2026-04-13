@@ -1,98 +1,232 @@
 [
   {
-    "title": "中炮局",
+    "title": "开局",
     "children": [
       {
-        "title": "中炮两头蛇对左三步虎",
-        "source": "game-tree/中炮局/中炮两头蛇对左三步虎.json"
+        "title": "中炮对屏风马",
+        "children": [
+          {
+            "title": "中炮七路马对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/中炮七路马对屏风马.json"
+          },
+          {
+            "title": "中炮右横车对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/中炮右横车对屏风马.json"
+          },
+          {
+            "title": "中炮巡河车对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/中炮巡河车对屏风马.json"
+          },
+          {
+            "title": "中炮左边马对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/中炮左边马对屏风马.json"
+          },
+          {
+            "title": "中炮过河车七路马对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车七路马对屏风马.json"
+          },
+          {
+            "title": "中炮过河车七路马对屏风马两头蛇",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车七路马对屏风马两头蛇.json"
+          },
+          {
+            "title": "中炮过河车互进七兵对屏风马上士",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车互进七兵对屏风马上士.json"
+          },
+          {
+            "title": "中炮过河车互进七兵对屏风马右横车",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车互进七兵对屏风马右横车.json"
+          },
+          {
+            "title": "中炮过河车互进七兵对屏风马右炮过河",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车互进七兵对屏风马右炮过河.json"
+          },
+          {
+            "title": "中炮过河车互进七兵对屏风马左马盘河",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车互进七兵对屏风马左马盘河.json"
+          },
+          {
+            "title": "中炮过河车互进七兵对屏风马平炮兑车",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车互进七兵对屏风马平炮兑车.json"
+          },
+          {
+            "title": "中炮过河车互进七兵对屏风马飞象",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车互进七兵对屏风马飞象.json"
+          },
+          {
+            "title": "中炮过河车对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车对屏风马.json"
+          },
+          {
+            "title": "中炮过河车左边马对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/中炮过河车左边马对屏风马.json"
+          },
+          {
+            "title": "五七炮互进七兵对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/五七炮互进七兵对屏风马.json"
+          },
+          {
+            "title": "五七炮互进三兵对屏风马边卒右马外盘河",
+            "source": "game-tree/开局/中炮对屏风马/五七炮互进三兵对屏风马边卒右马外盘河.json"
+          },
+          {
+            "title": "五七炮对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/五七炮对屏风马.json"
+          },
+          {
+            "title": "五七炮对屏风马进３卒",
+            "source": "game-tree/开局/中炮对屏风马/五七炮对屏风马进３卒.json"
+          },
+          {
+            "title": "五七炮对屏风马进３卒右马外盘河",
+            "source": "game-tree/开局/中炮对屏风马/五七炮对屏风马进３卒右马外盘河.json"
+          },
+          {
+            "title": "五七炮对屏风马进７卒",
+            "source": "game-tree/开局/中炮对屏风马/五七炮对屏风马进７卒.json"
+          },
+          {
+            "title": "五六炮对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/五六炮对屏风马.json"
+          },
+          {
+            "title": "五六炮左边马对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/五六炮左边马对屏风马.json"
+          },
+          {
+            "title": "五六炮过河车对屏风马",
+            "source": "game-tree/开局/中炮对屏风马/五六炮过河车对屏风马.json"
+          }
+        ]
       },
       {
-        "title": "中炮右横车对反宫马",
-        "source": "game-tree/中炮局/中炮右横车对反宫马.json"
-      },
-      {
-        "title": "中炮右横车对左三步虎",
-        "source": "game-tree/中炮局/中炮右横车对左三步虎.json"
-      },
-      {
-        "title": "中炮对单提马",
-        "source": "game-tree/中炮局/中炮对单提马.json"
-      },
-      {
-        "title": "中炮对单提马横车",
-        "source": "game-tree/中炮局/中炮对单提马横车.json"
-      },
-      {
-        "title": "中炮对反宫马",
-        "source": "game-tree/中炮局/中炮对反宫马.json"
-      },
-      {
-        "title": "中炮对反宫马后补左马",
-        "source": "game-tree/中炮局/中炮对反宫马后补左马.json"
-      },
-      {
-        "title": "中炮对右三步虎",
-        "source": "game-tree/中炮局/中炮对右三步虎.json"
-      },
-      {
-        "title": "中炮对士角炮转单提马",
-        "source": "game-tree/中炮局/中炮对士角炮转单提马.json"
-      },
-      {
-        "title": "中炮对左三步虎",
-        "source": "game-tree/中炮局/中炮对左三步虎.json"
-      },
-      {
-        "title": "中炮对左炮封车",
-        "source": "game-tree/中炮局/中炮对左炮封车.json"
-      },
-      {
-        "title": "中炮对进右马",
-        "source": "game-tree/中炮局/中炮对进右马.json"
-      },
-      {
-        "title": "中炮对进右马先上士",
-        "source": "game-tree/中炮局/中炮对进右马先上士.json"
-      },
-      {
-        "title": "中炮对进左马",
-        "source": "game-tree/中炮局/中炮对进左马.json"
-      },
-      {
-        "title": "中炮对鸳鸯炮",
-        "source": "game-tree/中炮局/中炮对鸳鸯炮.json"
-      },
-      {
-        "title": "中炮对龟背炮",
-        "source": "game-tree/中炮局/中炮对龟背炮.json"
-      },
-      {
-        "title": "中炮巡河炮对反宫马",
-        "source": "game-tree/中炮局/中炮巡河炮对反宫马.json"
-      },
-      {
-        "title": "中炮巡河炮对左三步虎",
-        "source": "game-tree/中炮局/中炮巡河炮对左三步虎.json"
-      },
-      {
-        "title": "中炮急进左马对反宫马",
-        "source": "game-tree/中炮局/中炮急进左马对反宫马.json"
-      },
-      {
-        "title": "中炮过河炮对左三步虎",
-        "source": "game-tree/中炮局/中炮过河炮对左三步虎.json"
-      },
-      {
-        "title": "中炮过河车对反宫马",
-        "source": "game-tree/中炮局/中炮过河车对反宫马.json"
-      },
-      {
-        "title": "中炮进七兵对单提马横车",
-        "source": "game-tree/中炮局/中炮进七兵对单提马横车.json"
-      },
-      {
-        "title": "五八炮对反宫马",
-        "source": "game-tree/中炮局/五八炮对反宫马.json"
+        "title": "中炮局",
+        "children": [
+          {
+            "title": "中炮两头蛇对左三步虎",
+            "source": "game-tree/开局/中炮局/中炮两头蛇对左三步虎.json"
+          },
+          {
+            "title": "中炮右横车对反宫马",
+            "source": "game-tree/开局/中炮局/中炮右横车对反宫马.json"
+          },
+          {
+            "title": "中炮右横车对左三步虎",
+            "source": "game-tree/开局/中炮局/中炮右横车对左三步虎.json"
+          },
+          {
+            "title": "中炮对单提马",
+            "source": "game-tree/开局/中炮局/中炮对单提马.json"
+          },
+          {
+            "title": "中炮对单提马横车",
+            "source": "game-tree/开局/中炮局/中炮对单提马横车.json"
+          },
+          {
+            "title": "中炮对反宫马",
+            "source": "game-tree/开局/中炮局/中炮对反宫马.json"
+          },
+          {
+            "title": "中炮对反宫马后补左马",
+            "source": "game-tree/开局/中炮局/中炮对反宫马后补左马.json"
+          },
+          {
+            "title": "中炮对右三步虎",
+            "source": "game-tree/开局/中炮局/中炮对右三步虎.json"
+          },
+          {
+            "title": "中炮对士角炮转单提马",
+            "source": "game-tree/开局/中炮局/中炮对士角炮转单提马.json"
+          },
+          {
+            "title": "中炮对左三步虎",
+            "source": "game-tree/开局/中炮局/中炮对左三步虎.json"
+          },
+          {
+            "title": "中炮对左炮封车",
+            "source": "game-tree/开局/中炮局/中炮对左炮封车.json"
+          },
+          {
+            "title": "中炮对进右马",
+            "source": "game-tree/开局/中炮局/中炮对进右马.json"
+          },
+          {
+            "title": "中炮对进右马先上士",
+            "source": "game-tree/开局/中炮局/中炮对进右马先上士.json"
+          },
+          {
+            "title": "中炮对进左马",
+            "source": "game-tree/开局/中炮局/中炮对进左马.json"
+          },
+          {
+            "title": "中炮对鸳鸯炮",
+            "source": "game-tree/开局/中炮局/中炮对鸳鸯炮.json"
+          },
+          {
+            "title": "中炮对龟背炮",
+            "source": "game-tree/开局/中炮局/中炮对龟背炮.json"
+          },
+          {
+            "title": "中炮巡河炮对反宫马",
+            "source": "game-tree/开局/中炮局/中炮巡河炮对反宫马.json"
+          },
+          {
+            "title": "中炮巡河炮对左三步虎",
+            "source": "game-tree/开局/中炮局/中炮巡河炮对左三步虎.json"
+          },
+          {
+            "title": "中炮急进左马对反宫马",
+            "source": "game-tree/开局/中炮局/中炮急进左马对反宫马.json"
+          },
+          {
+            "title": "中炮过河炮对左三步虎",
+            "source": "game-tree/开局/中炮局/中炮过河炮对左三步虎.json"
+          },
+          {
+            "title": "中炮过河车对反宫马",
+            "source": "game-tree/开局/中炮局/中炮过河车对反宫马.json"
+          },
+          {
+            "title": "中炮进七兵对单提马横车",
+            "source": "game-tree/开局/中炮局/中炮进七兵对单提马横车.json"
+          },
+          {
+            "title": "五七炮互进三兵对反宫马",
+            "source": "game-tree/开局/中炮局/五七炮互进三兵对反宫马.json"
+          },
+          {
+            "title": "五七炮对反宫马",
+            "source": "game-tree/开局/中炮局/五七炮对反宫马.json"
+          },
+          {
+            "title": "五七炮对反宫马右直车",
+            "source": "game-tree/开局/中炮局/五七炮对反宫马右直车.json"
+          },
+          {
+            "title": "五七炮对反宫马左横车",
+            "source": "game-tree/开局/中炮局/五七炮对反宫马左横车.json"
+          },
+          {
+            "title": "五七炮对反宫马左直车",
+            "source": "game-tree/开局/中炮局/五七炮对反宫马左直车.json"
+          },
+          {
+            "title": "五八炮对反宫马",
+            "source": "game-tree/开局/中炮局/五八炮对反宫马.json"
+          },
+          {
+            "title": "五六炮对反宫马",
+            "source": "game-tree/开局/中炮局/五六炮对反宫马.json"
+          },
+          {
+            "title": "五六炮左正马对反宫马",
+            "source": "game-tree/开局/中炮局/五六炮左正马对反宫马.json"
+          },
+          {
+            "title": "五六炮左边马对反宫马",
+            "source": "game-tree/开局/中炮局/五六炮左边马对反宫马.json"
+          }
+        ]
       }
     ]
   }

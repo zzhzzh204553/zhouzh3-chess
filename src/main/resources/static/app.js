@@ -362,7 +362,7 @@ function parseMoveSequence() {
     if (window.ChessRules.isInCheck(currentSide === "w", currentPieces)) {
         showMessage("将军");
     } else {
-        showMessage(`成功解析 ${moveTexts.length} 步棋谱`);
+        showMessage(`解析成功 - 共${moveTexts.length}步`);
     }
     if (lastCapture) {
         playMoveSound(true);
@@ -1207,7 +1207,7 @@ function isTreeSearching() {
 }
 
 
-function to_roman_num(index) {
+function toRomanNum(index) {
     const map = {M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1};
     let result = "";
     let value = index; // 使用副本，不修改原始 index
@@ -1250,7 +1250,7 @@ function toExcelColumn(num) {
 
 function getNodeLabel(level, index) {
     if (level === 0) {
-        return toChineseNum(index);
+        return toRomanNum(index);
     }
     if (level === 1) {
         return toExcelColumn(index);
